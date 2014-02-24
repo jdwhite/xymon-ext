@@ -1,0 +1,362 @@
+#!/usr/bin/perl
+#
+# box_monitor - report status of Box.com services
+#
+# Jason White <jdwhite@menelos.com>
+# 12-Feb-2014
+#
+# This program fetches the box.com service page and creates Xymon tests.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+# Install in $XYMONCLIENTHOME/client/ext/.
+# Modify $XYMONCLIENTHOME/etc/clientlaunch.cfg and add this block:
+#
+#   # Box.com Monitor
+#   [boxmon]
+#           ENABLED
+#           ENVFILE $XYMONCLIENTHOME/etc/xymonclient.cfg
+#           CMD $XYMONCLIENTHOME/ext/box_monitor
+#           LOGFILE $XYMONCLIENTHOME/logs/box_monitor.log
+#           INTERVAL 10m
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#
+# I recommend using a real, resolvable host name for this test so the
+# conn test works.  This will keep Xymon from generating a ton of alerts
+# in the event of transient network outages.
+#
+# hosts.cfg
+# ---------
+# 0.0.0.0         status.box.com                 # conn NAME:"Box Services"
+#
+=license
+The MIT License (MIT)
+
+Copyright (c) 2014 Jason White <jdwhite@menelos.com>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+=cut
+#
+
+use DateTime;
+use LWP::UserAgent;
+use HTML::FormatText::WithLinks;
+#use Data::HexDump;
+use Data::Dumper;
+
+## Globals ##
+$main::BASEURL	= "http://status.box.com"; # main
+#$main::MACHINE	= $ENV{MACHINE};
+$main::MACHINE	= "status,box,com"; # What we report as.
+
+# Fetch main status page HTML.
+$main::HTML = &http_fetch($main::BASEURL);
+
+#
+# Trim down HTML for easier parsing and debugging.
+#
+$main::HTML =~ s/^.+<tbody>(.+)<\/tbody>.+$/$1/ism;
+
+#
+# Box has four current status states and the following has provides a 
+# translation table.
+#
+#  'Up' 		- all good.
+#  'Warning'		- something's amiss.
+#  'Information'	- uses same orange triangle icon as Warning, but
+#			  generally means things are ok. We treat this
+#			  condition differently later on.
+#  'Servce disruption'	- something's totally borked.
+#
+%main::BOX2XYMONCOLOR = (
+	'Up'			=> 'green',
+	'Warning'		=> 'yellow',
+	'Information'		=> 'yellow',
+	'Service Disruption'	=> 'red'
+);
+
+# ## DEBUG ##
+#print Dumper $main::HTML;
+#exit;
+
+#
+# Each service has a row. Parse out each row/service and process.
+#
+while ($main::HTML =~ /<tr\s+id="([^"]+)".+?>(.+?)<\/tr>/iogsm) {
+	my($TESTNAME) = $1;
+	my($cols) = $2;
+	my($COLOR);
+	my($DATA) = "";
+	my($service) = $TESTNAME;
+	my($status);
+	my($StatusFeedHTML) = "";
+	my($StatusFeedTXT) = "";
+	my($StatusFeedPath) = "";
+	my($fetch_StatusFeed) = 0;
+
+	#
+	# Each service has six columns of data: current state and 
+	# previous five days. We scan through each of them to determine 
+	# if any of them had a non-green event, which is a signal to 
+	# fetch the status feed URL later on.
+	#
+	while ($cols =~ /<td class="([^"]+)".*?>(.+?)<\/td>/iogsm) {
+		my($class) = $1;
+		my($celldata) = $2;
+
+		# ## DEBUG ##
+		#print "-" x 70,"\n";
+		#print Dumper $celldata;
+		#print "-" x 70,"\n";
+
+		if ($celldata =~ /<img class=.+?alt="([^"]+)/iogsm) {
+			my($cellstatus) = $1;
+
+			# If status for current or previous 5 days 
+			# status is not "Up", flag to fetch status feed 
+			# for previous 5 days.
+			if ($cellstatus ne "Up") {
+				$fetch_StatusFeed = 1;
+				#print "====>fetch_StatusFeed = 1\n";
+			}
+
+			if ($class eq "status highlight") {
+				# Current status, make default status.
+				$status = $cellstatus;
+
+				#print "-----\nDEBUG: celldata=$celldata\n-----\n";
+
+				# See if there's a status feed URL.
+				if ($celldata =~ /loadServiceStatusFeed\([^,]+,\s*'([^']+)/iosm) {
+					$StatusFeedPath = $1;
+					#print "===>StatusFeedPath: $StatusFeedPath\n";
+				}
+			}
+		} 
+	}
+
+	my(@StatusFeed) = ();
+
+	if ($fetch_StatusFeed == 1) {
+		#
+		# Fetch extended status feed, parse, add to diagnostic output.
+		#
+		print "Fetching status feed....\n";
+		my($StatusFeedHTML) =
+			&http_fetch("${main::BASEURL}${StatusFeedPath}");
+
+		while ($StatusFeedHTML =~ /<tr class=[^>]+?>(.*?)<\/tr>/isg) {
+			#print "Reading log entry.....\n";
+			my($entry) = $1;
+			my(%event);
+
+			#print "x" x 70,"\n";
+			#print Dumper $entry;
+			#print "x" x 70,"\n";
+
+			if ($entry =~ /<img .*?alt="([^"]+)/iso) {
+				$event{status} = $1;
+				#print "=>status: $1\n";
+			}
+			if ($entry =~ /<strong>(.+?UTC)<\/strong>/iso) {
+				$event{date} = $1;
+				#print "=>date: $1\n";
+			}
+			if ($entry =~ /<td class="last">.*?<br \/>(.+?)<\/td>/iso) {
+				$event{msg} = $1;
+				#print "=>msg: $1\n";
+
+			}
+
+			push(@StatusFeed, \%event);
+		}
+	}			
+
+	#
+	# If status is Informational, check the status of the most 
+	# recent entry in the extended status feed. If the status is 
+	# "green", then this service is green.
+	#
+	if ($status eq "Information" && $StatusFeed[0]->{status} eq "Up") {
+		#print "**** INFORMATIONAL YELLOW; Latest status log ".
+		#	"shows green; promiting status to green\n";
+		$COLOR = "green";
+		$status = "Up (Informational)";
+	} else {
+		if (defined($main::BOX2XYMONCOLOR{$status})) {
+			$COLOR = $main::BOX2XYMONCOLOR{$status};
+		} else {
+			$status = "UNKNOWN STATUS '${status}'";
+			$COLOR = "red";
+		}
+	}
+	$DATA .= "${service}: $status &$COLOR\n\n";
+
+	#
+	# If there's a status feed, format and display.
+	#
+	foreach my $event (@StatusFeed) {
+		my $f = HTML::FormatText::WithLinks->new(
+			before_link => '',
+			after_link => ' [%l]',
+			footnote => '',
+			leftmargin => 3,
+			rightmargin => 80
+		);
+
+		#
+		# Try and weed out any unicode as it does not display
+		# properly on a Xymon page.
+		#
+		$event->{msg} =~ s/\’/\'/gm; # WORKS!
+		$event->{msg} = $f->parse($event->{msg});
+		#my $msg = Encode::encode("ISO-8859-1", $event->{msg});
+		#$event->{msg} =~ s/0x0D/\'/gm;
+		#$event->{msg} =~ s/\N{U+2019}/\'/gm;
+		#$event->{msg} = Encode::encode("US-ASCII", $event->{msg});
+		#print "=============\n".HexDump($event->{msg})."\n=============\n";
+
+		$DATA .= "&$main::BOX2XYMONCOLOR{$event->{status}} ".
+			&box2localtime($event->{date}).
+			"\n$event->{msg}\n";
+	}
+
+	$DATA .= "\n";
+
+	# Reference.
+	$DATA .= "Source: <A HREF=\"${main::BASEURL}\">${main::BASEURL}</A>\n";
+
+	#
+	# Generate status report.
+	#
+	# STATUS - Canonical status of test and its lifetime: status[+LIFETIME]
+	my($STATUS) = "status ${main::MACHINE}.${TESTNAME} ${COLOR}";
+
+	# SUMMARY - datestamp and summary of the test.
+	my($SUMMARY) = scalar(localtime(time))." - ${TESTNAME}: $status";
+
+	# MESSAGE - status, summary, diagnostic data combined.
+	my($MESSAGE) = "${STATUS} ${SUMMARY}\n\n${DATA}";
+
+	#
+	# Send to Xymon or to stdout if run interactively.
+	#
+	if (defined($ENV{XYMON})) {
+		# "at" sign as argument means "read message data from stdin".
+		# DON'T USE A DASH AS THE xymon USAGE MESSAGE SHOWS ELSE ONLY
+		# THE SUMMARY INFORMATION IS DISPLAYED AND NONE OF ${DATA}.
+		# THE MANPAGE USAGE OF "@" IS CORRECT.
+
+		open(XYMON, "| $ENV{XYMON} $ENV{XYMSRV} @") || do {
+			print "Error invoking $ENV{XYMON} $ENV{XYMSRV} @ - $!";
+			exit;
+		};
+		select(XYMON);
+	} else {
+		print STDERR	"*** Not invoked by Xymon; ".
+				"sending to stdout ***\n\n";
+	}
+
+	print $MESSAGE;
+	close(XYMON);
+}
+
+exit;
+
+sub
+http_fetch
+#
+# Fetch page by URL.
+#
+{
+	my($URL) = shift(@_);
+	my($ua) = LWP::UserAgent->new;
+	my($HTML);
+	my($req) = HTTP::Request->new(
+		GET => $URL
+	);
+
+	# Pass request to the user agent and get a response.
+	my($resp) = $ua->request($req);
+
+	# Check the outcome of the response.
+	if ($resp->is_success) {
+		$HTML = $resp->content;
+	} else {
+		print STDERR "Error reading $URL - ".$resp->status_line."\n";
+	}
+
+	return($HTML);
+}
+
+sub
+box2localtime
+#
+# Convert from Box's UTC time format to local time.
+# Example: Feb 11 - 4:43PM  UTC
+#
+{
+	my(%month) = (
+		"Jan" => 1, "Feb" => 2, "Mar" => 3, "Apr" => 4, "May" => 5,
+		"Jun" => 6, "Jul" => 7, "Aug" => 8, "Sep" => 9, "Oct" => 10,
+		"Nov" => 11, "Dec" => 12
+	);
+
+	my($boxtime) = shift(@_);
+	my($box_mon, $box_day, $box_hour, $box_min, $box_ampm, $box_tz,
+		$box_year);
+	my($l_mon,$l_year) = (localtime(time))[4,5];
+
+	if ($boxtime =~ /(\w+)\s+(\d+)\s+\-\s+(\d+):(\d+)(\w+)\s+(\w+)/io) {
+		($box_mon, $box_day, $box_hour, $box_min, $box_ampm, $box_tz) =
+			($1, $2, $3, $4, $5, $6);
+	} else {
+		return($boxtime);
+	}
+
+	#print "box_mon=$box_mon\nbox_day=$box_day\n".
+	#	"box_hour=$box_hour\nbox_min=$box_min\n".
+	#	"box_ampm=$box_ampm\nbox_tz=$box_tz\n";
+
+	$box_year = $l_year + 1900;
+	if ($l_mon eq "Dec" && $box_mon eq "Jan") {
+		$box_year += 1;
+	}
+	if ($box_ampm =~ /^pm/io && $box_hour < 13) {
+		$box_hour += 12;
+	}
+	if ($box_ampm =~ /^am/io && $box_hour == 12) {
+		$box_hour -= 12;
+	}
+
+	my $dt = DateTime->new(
+		year		=> $box_year,
+		month		=> $month{$box_mon},
+		day		=> $box_day,
+		hour		=> $box_hour,
+		minute		=> $box_min,
+		second		=> 0,
+		time_zone	=> $box_tz
+	);
+
+	#print $dt->hms,"\n";
+	$dt->set_time_zone('America/Chicago');
+	#print $dt->hms,"\n";
+
+	return($dt->strftime("%a %b %e, %Y %l:%M%p %Z"));
+}
