@@ -9,10 +9,30 @@ Monitors network socket utilization that, in excess, causes the "Can't
 assign requested address" error that exists in OS X Mavericks 10.9.1. 
 More information can be found at https://discussions.apple.com/thread/5551686
 
+    Sun Feb 23 21:43:31 2014 - socket: OK
+
+    Results of "netstat -an -f inet"
+
+         CLOSED:    0 green
+     CLOSE_WAIT:    0 green
+        CLOSING:    0 green
+    ESTABLISHED:   34 green
+     FIN_WAIT_1:    2 green
+     FIN_WAIT_2:    2 green
+       LAST_ACK:    5 green
+         LISTEN:   37 green
+       SYN_RCVD:    0 green
+       SYN_SENT:   15 green
+      TIME_WAIT:    0 green
+
 client/dropbox_monitor
 ----------------------
 Monitors status of Dropbox service by scraping http://status.dropbox.com 
 and examing the string after "Dropbox is ".
+
+    Sun Feb 23 21:41:23 2014 - status: running normally.
+    
+    Dropbox is running normally. green
 
 client/google_monitor
 ---------------------
@@ -54,3 +74,41 @@ Google_monitor has not been tested against a full service outage, so the
 event type is unknown to the author at this time. Unknown event types 
 are flagged as yellow and diagnostic data will be presented on the test 
 page. The author would be grateful for any reports of unknown type codes. 
+
+client/box_monitor
+------------------
+
+Monitors Box.com cloud services using data retrieved from 
+http://status.box.com. Each service is reported as a separate test.  
+Example output from the sync service test:
+
+    Sun Feb 23 21:31:22 2014 - sync: Up
+    
+    sync: Up green
+    
+    green Thu Feb 20, 2014 10:36PM CST
+       The Sync downloads delay and notifications issue is resolved as of 
+       8:36 p.m. PST. We apologize for any inconvenience.
+
+    red Thu Feb 20, 2014  6:53PM CST
+       Sync downloads and realtime notifications within the web 
+       interface are delayed for some users.
+
+    green Wed Feb 19, 2014  5:59PM CST
+       The issue with Sync and notifications is resolved as of 3:59 p.m. 
+       PST. We apologize for any inconvenience.
+
+    red Wed Feb 19, 2014  3:00PM CST
+       Today starting at 1:00pm PST, Box Sync and realtime notifications 
+       within the web interface are delayed.
+
+    Source: http://status.box.com
+
+The extended log is only available for tests that have experienced 
+issues in the past five days. Please note that while the timestamp at 
+the beginning of each event log entry is converted to the time zone of 
+your choice, any time references in the body of the event are not since 
+the formats of those are more free-form.  I do plan to try and address 
+this in a later release as well as automatically determine the local 
+time zone so it doesn't have to be hard coded at the end of 
+box2localtime().
