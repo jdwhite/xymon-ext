@@ -153,3 +153,9 @@ Example output from the iCloud host, Calendar service test:
     Calendar: OK green
 
     Source: http://www.apple.com/support/systemstatus/
+
+client/dumpurl.js
+-----------------
+Takes one URL as an argument, loads the page, renders any Javascript 
+present, and dumps the result to STDOUT.  Required by 
+client/apple_monitor.
