@@ -3,6 +3,8 @@ xymon-ext
 
 External Xymon tests.
 
+These tests use a lot of the same code, and I plan to place that code into a perl module down the road.
+
 client/socket_monitor
 ---------------------
 Monitors network socket utilization that, in excess, causes the "Can't 
@@ -112,3 +114,42 @@ the formats of those are more free-form.  I do plan to try and address
 this in a later release as well as automatically determine the local 
 time zone so it doesn't have to be hard coded at the end of 
 box2localtime().
+
+client/apple_monitor
+--------------------
+
+Monitors Apple's numerous services using data retrieved from 
+http://www.apple.com/support/systemstatus/. Because Apple's status page 
+requires javascript, this test requires phantiomjs 
+(http://phantomjs.org) and the included 'dumpurl.js' file to renter the 
+javascript and produce HTML this test can consume.  Be sure to modify 
+the following variables in apple_monitor accordingly.
+
+    $::PHANTOMJS    = "/usr/local/bin/phantomjs";
+    $::DUMPURLJS    = "/usr/local/libexec/dumpurl.js";
+
+Apple's status page currently includes three main service categories: 
+Services, Store, and iCloud.  This test treats each category as a 
+separate host, each with their own set of tests, for a total of 35 
+tests.  The hosts.cfg file should contain the following:
+
+    group
+    0.0.0.0         store.apple.com                 # conn NAME:"Apple Stores"
+
+    group
+    0.0.0.0         www.apple.com                   # conn NAME:"Apple Services"
+
+    group
+    0.0.0.0         www.icloud.com                  # conn NAME:"Apple iCloud"
+
+I recommend using real, resolvable host names for each category so the 
+conn test works.  This will keep Xymon from generating a ton of alerts 
+in the event of transient network outages.
+
+Example output from the iCloud host, Calendar service test:
+
+    Sun Feb 23 22:01:42 2014 - Calendar: OK
+
+    Calendar: OK green
+
+    Source: http://www.apple.com/support/systemstatus/
