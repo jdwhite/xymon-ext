@@ -1,7 +1,7 @@
 //
 // dumpurl.js - fetch, render, and dump HTML to stdout
 //
-// Jason White <jdwhite@meneos.com>
+// Jason White <jdwhite@menelos.com>
 // 11-Feb-2014
 //
 var page = new WebPage(), address;
