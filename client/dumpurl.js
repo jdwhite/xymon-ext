@@ -31,5 +31,3 @@ page.open(address, function (status) {
         phantom.exit();
     }, 4000); // 4 second timeout.
 });
-
-phantom.exit();
