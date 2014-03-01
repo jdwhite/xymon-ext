@@ -1,35 +1,7 @@
 #!/usr/bin/perl
-#
-# box_monitor - report status of Box.com services
-#
-# Jason White <jdwhite@menelos.com>
-# 12-Feb-2014
-#
-# This program fetches the box.com service page and creates Xymon tests.
-#
-#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-# Install in $XYMONCLIENTHOME/client/ext/.
-# Modify $XYMONCLIENTHOME/etc/clientlaunch.cfg and add this block:
-#
-#   # Box.com Monitor
-#   [boxmon]
-#           ENABLED
-#           ENVFILE $XYMONCLIENTHOME/etc/xymonclient.cfg
-#           CMD $XYMONCLIENTHOME/ext/box_monitor
-#           LOGFILE $XYMONCLIENTHOME/logs/box_monitor.log
-#           INTERVAL 10m
-#
-#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-#
-# I recommend using a real, resolvable host name for this test so the
-# conn test works.  This will keep Xymon from generating a ton of alerts
-# in the event of transient network outages.
-#
-# hosts.cfg
-# ---------
-# 0.0.0.0         status.box.com                 # conn NAME:"Box Services"
-#
-=license
+
+=begin License
+
 The MIT License (MIT)
 
 Copyright (c) 2014 Jason White <jdwhite@menelos.com>
@@ -50,19 +22,58 @@ FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
 COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+=end License
 =cut
+
+#
+# box_monitor - report status of Box.com services
+#
+# Jason White <jdwhite@menelos.com>
+# 12-Feb-2014 (initial version)
+#
+# This program fetches the box.com service page and creates Xymon tests.
+#
+# Initial indentation of is done with tabs; successive alignment is done 
+# with spaces. To format this code per your indentation preference, say, 
+# 4 spaces per tab stop:
+#	less -x4
+#	nano -T4
+#	vim (set tabstop=4 (also in .vimrc))
+#	vi  (set ts=4 (also in .exrc))
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+# Install in $XYMONCLIENTHOME/client/ext/.
+# Modify $XYMONCLIENTHOME/etc/clientlaunch.cfg and add this block:
+#
+# # Box.com Monitor
+# [boxmon]
+#	  ENABLED
+#	  ENVFILE $XYMONCLIENTHOME/etc/xymonclient.cfg
+#	  CMD $XYMONCLIENTHOME/ext/box_monitor
+#	  LOGFILE $XYMONCLIENTHOME/logs/box_monitor.log
+#	  INTERVAL 10m
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#
+# I recommend using a real, resolvable host name for this test so the 
+# conn test works.  This will keep Xymon from generating a ton of alerts 
+# in the event of transient network outages.
+#
+# hosts.cfg
+# ---------
+# 0.0.0.0         status.box.com                 # conn NAME:"Box Services"
 #
 
 use DateTime;
 use LWP::UserAgent;
 use HTML::FormatText::WithLinks;
 #use Data::HexDump;
-use Data::Dumper;
+#use Data::Dumper;
 
 ## Globals ##
-$main::BASEURL	= "http://status.box.com"; # main
+$main::BASEURL  = "http://status.box.com"; # main
 #$main::MACHINE	= $ENV{MACHINE};
-$main::MACHINE	= "status,box,com"; # What we report as.
+$main::MACHINE  = "status,box,com"; # What we report as.
 
 # Fetch main status page HTML.
 $main::HTML = &http_fetch($main::BASEURL);
@@ -76,18 +87,18 @@ $main::HTML =~ s/^.+<tbody>(.+)<\/tbody>.+$/$1/ism;
 # Box has four current status states and the following has provides a 
 # translation table.
 #
-#  'Up' 		- all good.
-#  'Warning'		- something's amiss.
-#  'Information'	- uses same orange triangle icon as Warning, but
-#			  generally means things are ok. We treat this
-#			  condition differently later on.
-#  'Servce disruption'	- something's totally borked.
+#  'Up'                 - all good.
+#  'Warning'            - something's amiss.
+#  'Information'        - uses same orange triangle icon as Warning, but
+#                         generally means things are ok. We treat this
+#                         condition differently later on.
+#  'Servce disruption'  - something's totally borked.
 #
 %main::BOX2XYMONCOLOR = (
-	'Up'			=> 'green',
-	'Warning'		=> 'yellow',
-	'Information'		=> 'yellow',
-	'Service Disruption'	=> 'red'
+	'Up'                 => 'green',
+	'Warning'            => 'yellow',
+	'Information'        => 'yellow',
+	'Service Disruption' => 'red'
 );
 
 # ## DEBUG ##
@@ -147,7 +158,7 @@ while ($main::HTML =~ /<tr\s+id="([^"]+)".+?>(.+?)<\/tr>/iogsm) {
 					#print "===>StatusFeedPath: $StatusFeedPath\n";
 				}
 			}
-		} 
+		}
 	}
 
 	my(@StatusFeed) = ();
@@ -156,7 +167,7 @@ while ($main::HTML =~ /<tr\s+id="([^"]+)".+?>(.+?)<\/tr>/iogsm) {
 		#
 		# Fetch extended status feed, parse, add to diagnostic output.
 		#
-		print "Fetching status feed....\n";
+		#print "Fetching status feed....\n";
 		my($StatusFeedHTML) =
 			&http_fetch("${main::BASEURL}${StatusFeedPath}");
 
@@ -185,7 +196,7 @@ while ($main::HTML =~ /<tr\s+id="([^"]+)".+?>(.+?)<\/tr>/iogsm) {
 
 			push(@StatusFeed, \%event);
 		}
-	}			
+	}
 
 	#
 	# If status is Informational, check the status of the most 
@@ -197,10 +208,12 @@ while ($main::HTML =~ /<tr\s+id="([^"]+)".+?>(.+?)<\/tr>/iogsm) {
 		#	"shows green; promiting status to green\n";
 		$COLOR = "green";
 		$status = "Up (Informational)";
-	} else {
+	}
+	else {
 		if (defined($main::BOX2XYMONCOLOR{$status})) {
 			$COLOR = $main::BOX2XYMONCOLOR{$status};
-		} else {
+		}
+		else {
 			$status = "UNKNOWN STATUS '${status}'";
 			$COLOR = "red";
 		}
@@ -210,6 +223,9 @@ while ($main::HTML =~ /<tr\s+id="([^"]+)".+?>(.+?)<\/tr>/iogsm) {
 	#
 	# If there's a status feed, format and display.
 	#
+	if (scalar(@StatusFeed) > 0) {
+		$DATA .= "   [Note: listed times are likely Pacific time unless noted.]\n";
+	}
 	foreach my $event (@StatusFeed) {
 		my $f = HTML::FormatText::WithLinks->new(
 			before_link => '',
@@ -267,9 +283,10 @@ while ($main::HTML =~ /<tr\s+id="([^"]+)".+?>(.+?)<\/tr>/iogsm) {
 			exit;
 		};
 		select(XYMON);
-	} else {
-		print STDERR	"*** Not invoked by Xymon; ".
-				"sending to stdout ***\n\n";
+	}
+	else {
+		print STDERR "*** Not invoked by Xymon; ".
+		             "sending to stdout ***\n\n";
 	}
 
 	print $MESSAGE;
@@ -297,7 +314,8 @@ http_fetch
 	# Check the outcome of the response.
 	if ($resp->is_success) {
 		$HTML = $resp->content;
-	} else {
+	}
+	else {
 		print STDERR "Error reading $URL - ".$resp->status_line."\n";
 	}
 
@@ -319,13 +337,14 @@ box2localtime
 
 	my($boxtime) = shift(@_);
 	my($box_mon, $box_day, $box_hour, $box_min, $box_ampm, $box_tz,
-		$box_year);
+	   $box_year);
 	my($l_mon,$l_year) = (localtime(time))[4,5];
 
 	if ($boxtime =~ /(\w+)\s+(\d+)\s+\-\s+(\d+):(\d+)(\w+)\s+(\w+)/io) {
 		($box_mon, $box_day, $box_hour, $box_min, $box_ampm, $box_tz) =
 			($1, $2, $3, $4, $5, $6);
-	} else {
+	}
+	else {
 		return($boxtime);
 	}
 
@@ -345,13 +364,13 @@ box2localtime
 	}
 
 	my $dt = DateTime->new(
-		year		=> $box_year,
-		month		=> $month{$box_mon},
-		day		=> $box_day,
-		hour		=> $box_hour,
-		minute		=> $box_min,
-		second		=> 0,
-		time_zone	=> $box_tz
+		year      => $box_year,
+		month     => $month{$box_mon},
+		day       => $box_day,
+		hour      => $box_hour,
+		minute    => $box_min,
+		second    => 0,
+		time_zone => $box_tz
 	);
 
 	#print $dt->hms,"\n";
