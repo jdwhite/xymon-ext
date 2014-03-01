@@ -231,7 +231,7 @@ while ($main::HTML =~ /<tr\s+id="([^"]+)".+?>(.+?)<\/tr>/iogsm) {
 			before_link => '',
 			after_link => ' [%l]',
 			footnote => '',
-			leftmargin => 3,
+			leftmargin => 6,
 			rightmargin => 80
 		);
 
