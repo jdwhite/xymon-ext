@@ -1,36 +1,7 @@
 #!/usr/bin/perl
-#
-# google_monitor - report status of Google services
-#
-# Jason White <jdwhite@menelos.com>
-# 8-Feb-2014
-#
-# This program fetches the google services logs in JSON format and creates
-# Xymon tests.
-#
-#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-# Install in $XYMONCLIENTHOME/client/ext/.
-# Modify $XYMONCLIENTHOME/etc/clientlaunch.cfg and add this block:
-#
-#   # Google Monitor
-#   [googlemon]
-#           ENABLED
-#           ENVFILE $XYMONCLIENTHOME/etc/xymonclient.cfg
-#           CMD $XYMONCLIENTHOME/ext/google_monitor
-#           LOGFILE $XYMONCLIENTHOME/logs/google_monitor.log
-#           INTERVAL 10m
-#
-#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-#
-# I recommend using a real, resolvable host name for this test so the 
-# conn test works.  This will keep Xymon from generating a ton of alerts 
-# in the event of transient network outages.
-#
-# hosts.cfg
-# ---------
-# 0.0.0.0         apps.google.com                 # conn NAME:"Google Services"
-#
-=license
+
+=begin License
+
 The MIT License (MIT)
 
 Copyright (c) 2014 Jason White <jdwhite@menelos.com>
@@ -51,7 +22,47 @@ FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
 COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+=end License
 =cut
+
+#
+# google_monitor - report status of Google services
+#
+# Jason White <jdwhite@menelos.com>
+# 8-Feb-2014 (initial release)
+#
+# This program fetches the google services logs in JSON format and creates
+# Xymon tests.
+#
+# Initial indentation of is done with tabs; successive alignment is done 
+# with spaces. To format this code per your indentation preference, say, 
+# 4 spaces per tab stop:
+#	  less -x4
+#	  nano -T4
+#	  vim (set tabstop=4 (also in .vimrc))
+#	  vi  (set ts=4 (also in .exrc))
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+# Install in $XYMONCLIENTHOME/client/ext/.
+# Modify $XYMONCLIENTHOME/etc/clientlaunch.cfg and add this block:
+#
+# # Google Monitor
+# [googlemon]
+#	  ENABLED
+#	  ENVFILE $XYMONCLIENTHOME/etc/xymonclient.cfg
+#	  CMD $XYMONCLIENTHOME/ext/google_monitor
+#	  LOGFILE $XYMONCLIENTHOME/logs/google_monitor.log
+#	  INTERVAL 10m
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#
+# I recommend using a real, resolvable host name for this test so the 
+# conn test works.  This will keep Xymon from generating a ton of alerts 
+# in the event of transient network outages.
+#
+# hosts.cfg
+# ---------
+# 0.0.0.0         apps.google.com                 # conn NAME:"Google Services"
 #
 #use strict;
 use warnings;
@@ -62,11 +73,11 @@ use JSON;
 use Data::Dumper;
 
 ## Globals ##
-$main::URL		= "http://www.google.com/appsstatus";
-$main::URL_JSON		= "http://www.google.com/appsstatus/json/en";
-#$main::MACHINE		= $ENV{MACHINE};
-$main::MACHINE		= "apps,google,com"; # What we report as.
-#$main::MACHINEDOTS	= $ENV{MACHINEDOTS}; # unused
+$main::URL          = "http://www.google.com/appsstatus";
+$main::URL_JSON     = "http://www.google.com/appsstatus/json/en";
+#$main::MACHINE     = $ENV{MACHINE};
+$main::MACHINE      = "apps,google,com"; # What we report as.
+#$main::MACHINEDOTS = $ENV{MACHINEDOTS}; # unused
 
 #
 # Fetch JSON service log.
@@ -86,7 +97,8 @@ if ($resp->is_success) {
 	# What google serves isn't (apparently) valid JSON, so fix it.
 	$main::json_service_log =~ s/^dashboard.jsonp\(//;
 	$main::json_service_log =~ s/\);$//;
-} else {
+}
+else {
 	print "Error reading service statuslog - ".$resp->status_line."\n";
 	exit;
 }
@@ -98,7 +110,7 @@ $main::EVENTLOG = decode_json $main::json_service_log;
 #
 # ::EVENTLOG is a hash that contains two keys used by this test: 
 #
-#   services - an array of hashes created from the following example data:
+#  services - an array of hashes created from the following example data:
 #
 #     {"id":1,"sort":1,"name":"Gmail","type":0}
 #
@@ -137,16 +149,16 @@ $main::EVENTLOG = decode_json $main::json_service_log;
 
 # Define message type codes into Xymon color markers.
 %main::MESSAGE_TYPE_COLOR = (
-	"1"	=> "yellow",	# Service disruption.
-	"2"	=> "red",	# Service outage?? (need outage example)
-	"3"	=> "green"	# Service restored.
+	"1" => "yellow", # Service disruption.
+	"2" => "red",    # Service outage?? (need outage example)
+	"3" => "green"   # Service restored.
 );	
 
 %main::MESSAGE_TYPE_STRING = (
-	"1"	=> "Service disruption",
-	"2"	=> "Service outage",	# need confirmation
-	"3"	=> "OK"
-);	
+	"1" => "Service disruption",
+	"2" => "Service outage",    # need confirmation
+	"3" => "OK"
+);
 
 #
 # Create message log hash keyed by service ID.
@@ -177,8 +189,11 @@ foreach my $entry (@{$main::EVENTLOG->{services}}) {
 	$TESTNAME =~ s/\s+/_/g;
 
 	# Sort the messages for a given service by time, descending.
-	my(@servicelog) = 
-	    sort {$b->{time} <=> $a->{time}} @{$main::MESSAGES_BY_SERVICEID{$sid}};
+	my(@servicelog) = @{$main::MESSAGES_BY_SERVICEID{$sid}};
+	if (scalar(@{$main::MESSAGES_BY_SERVICEID{$sid}}) > 1) {
+		@servicelog = sort {$b->{time} <=> $a->{time}} 
+		              @{$main::MESSAGES_BY_SERVICEID{$sid}};
+	}
 
 	#
 	# Determing the overall service status by looking at the value 
@@ -188,7 +203,8 @@ foreach my $entry (@{$main::EVENTLOG->{services}}) {
 	if (defined($servicelog[0])) {
 		$COLOR = $main::MESSAGE_TYPE_COLOR{$servicelog[0]->{type}};
 		$status = $main::MESSAGE_TYPE_STRING{$servicelog[0]->{type}};
-	} else {
+	}
+	else {
 		$COLOR = "green";
 		$status = "OK";
 	}
@@ -250,19 +266,20 @@ foreach my $entry (@{$main::EVENTLOG->{services}}) {
 	# Send to Xymon or to stdout if run interactively.
 	#
 	if (defined($ENV{XYMON})) {
-	        # "at" sign as argument means "read message data from stdin".
-	        # DON'T USE A DASH AS THE xymon USAGE MESSAGE SHOWS ELSE ONLY
-	        # THE SUMMARY INFORMATION IS DISPLAYED AND NONE OF ${DATA}.
-	        # THE MANPAGE USAGE OF "@" IS CORRECT.
+		# "at" sign as argument means "read message data from stdin".
+		# DON'T USE A DASH AS THE xymon USAGE MESSAGE SHOWS ELSE ONLY
+		# THE SUMMARY INFORMATION IS DISPLAYED AND NONE OF ${DATA}.
+		# THE MANPAGE USAGE OF "@" IS CORRECT.
 
-	        open(XYMON, "| $ENV{XYMON} $ENV{XYMSRV} @") || do {
-	                print "Error invoking $ENV{XYMON} $ENV{XYMSRV} @ - $!";
-	                exit;
-	        };
-	        select(XYMON);
-	} else {
-	        print STDERR	"*** Not invoked by Xymon; ".
-				"sending to stdout ***\n\n";
+		open(XYMON, "| $ENV{XYMON} $ENV{XYMSRV} @") || do {
+			print "Error invoking $ENV{XYMON} $ENV{XYMSRV} @ - $!";
+			exit;
+		};
+		select(XYMON);
+	}
+	else {
+		print STDERR "*** Not invoked by Xymon; ".
+		             "sending to stdout ***\n\n";
 	}
 
 	print $MESSAGE;

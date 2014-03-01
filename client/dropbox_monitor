@@ -1,22 +1,7 @@
 #!/usr/bin/perl
-#
-# dropbox_monitor - report status of Dropbox service
-#
-# Jason White <jdwhite@menelos.com>
-# 17-Jan-2014
-#
-# Install in $XYMONCLIENTHOME/client/ext/.
-# Modify $XYMONCLIENTHOME/etc/clientlaunch.cfg and add this block:
-#
-#   # Dropbox Monitor
-#   [dropboxmon]
-#           ENABLED
-#           ENVFILE $XYMONCLIENTHOME/etc/xymonclient.cfg
-#           CMD $XYMONCLIENTHOME/ext/dropbox_monitor
-#           LOGFILE $XYMONCLIENTHOME/logs/dropbox_monitor.log
-#           INTERVAL 10m
-#
-=license
+
+=begin License
+
 The MIT License (MIT)
 
 Copyright (c) 2014 Jason White <jdwhite@menelos.com>
@@ -37,7 +22,60 @@ FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
 COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+=end License
 =cut
+
+#
+# dropbox_monitor - report status of Dropbox service
+#
+# Jason White <jdwhite@menelos.com>
+# 17-Jan-2014 (initial release)
+#
+# Initial indentation of is done with tabs; successive alignment is done 
+# with spaces. To format this code per your indentation preference, say, 
+# 4 spaces per tab stop:
+#       less -x4
+#       nano -T4
+#       vim (set tabstop=4 (also in .vimrc))
+#       vi  (set ts=4 (also in .exrc))
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+# Install in $XYMONCLIENTHOME/client/ext/.
+# Modify $XYMONCLIENTHOME/etc/clientlaunch.cfg and add this block:
+#
+#	# Dropbox Monitor
+#	[dropboxmon]
+#		ENABLED
+#		ENVFILE $XYMONCLIENTHOME/etc/xymonclient.cfg
+#		CMD $XYMONCLIENTHOME/ext/dropbox_monitor
+#		LOGFILE $XYMONCLIENTHOME/logs/dropbox_monitor.log
+#		INTERVAL 10m
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#
+# The MIT License (MIT)
+#
+# Copyright (c) 2014 Jason White <jdwhite@menelos.com>
+#
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+#
+# The above copyright notice and this permission notice shall be included
+# in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+# IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+# CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+# TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+# SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+#
 
 use strict;
 use warnings;
@@ -45,18 +83,18 @@ use warnings;
 use LWP::UserAgent;
 
 ## Globals ##
-$main::TESTNAME	= 'status';
-$main::COLOR	= "clear";	# uncertain by default
-$main::DATA	= "";
-$main::MACHINE	= "status,dropbox,com";	#What we report as.
-$main::URL	= "http://status.dropbox.com";
+$main::TESTNAME  = 'status';
+$main::TESTCOLOR = "clear";	# uncertain by default
+$main::DATA      = "";
+$main::MACHINE   = "status,dropbox,com";	#What we report as.
+$main::URL       = "http://status.dropbox.com";
 
 #
 # Fetch main page and process.
 #
 my($ua) = LWP::UserAgent->new;
 my($req) = HTTP::Request->new(
-        GET => $main::URL
+	GET => $main::URL
 );
 
 # Pass request to the user agent and get a response.
@@ -65,10 +103,11 @@ my($resp) = $ua->request($req);
 # Check the outcome of the response.
 $main::HTML = "";
 if ($resp->is_success) {
-        $main::HTML = $resp->content;
-} else {
-        print "Error reading $main::URL - ".$resp->status_line."\n";
-        exit;
+	$main::HTML = $resp->content;
+}
+else {
+	print "Error reading $main::URL - ".$resp->status_line."\n";
+	exit;
 }
 
 $main::HTML =~ /<h1>(Dropbox is (.+?))<\/h1>/iom;
@@ -76,20 +115,21 @@ $main::DATA .= $1;
 $main::status = $2;
 
 if ($main::status ne "running normally.") {
-	$main::COLOR = "red";
-} else {
-	$main::COLOR = "green";
+	$main::TESTCOLOR = "red";
+}
+else {
+	$main::TESTCOLOR = "green";
 }
 
-$main::DATA .= " \&${main::COLOR}\n";
+$main::DATA .= " \&${main::TESTCOLOR}\n";
 
 ##
 ## Generate status report.
 ##
 
 # STATUS - Canonical status of test and its lifetime: status[+LIFETIME]
-#$STATUS = "status+25h ${main::MACHINE}.${main::TESTNAME} ${main::COLOR}";
-$main::STATUS = "status ${main::MACHINE}.${main::TESTNAME} ${main::COLOR}";
+#$STATUS = "status+25h ${main::MACHINE}.${main::TESTNAME} ${main::TESTCOLOR}";
+$main::STATUS = "status ${main::MACHINE}.${main::TESTNAME} ${main::TESTCOLOR}";
 
 # SUMMARY - datestamp and summary of the test.
 $main::SUMMARY = scalar(localtime(time))." - ${main::TESTNAME}: $main::status";
@@ -110,7 +150,8 @@ if (defined($ENV{XYMON})) {
 		exit;
 	};
 	select(XYMON);
-} else {
+}
+else {
 	print STDERR "*** Not invoked by Xymon; sending to stdout ***\n\n";
 }
 

@@ -1,111 +1,7 @@
 #!/usr/bin/perl
-#
-# apple_monitor - report status of Apple's services.
-#
-# Jason White <jdwhite@menelos.com>
-# 8-Feb-2014
-#
-# Requires phantomjs (http://phantomjs.org) to render javascript and
-# produce HTML.  Also be sure to save the following as 'dumpurl.js':
-#
-#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-# Created with 'uuencode -m ...'. Decode with uudecode.
-#
-=dumpurl.js.uue
-begin-base64 644 dumpurl.js
-Ly8KLy8gZHVtcHVybC5qcyAtIGZldGNoLCByZW5kZXIsIGFuZCBkdW1wIEhUTUwgdG8gc3Rkb3V0
-Ci8vCi8vIEphc29uIFdoaXRlCi8vIDExLUZlYi0yMDE0Ci8vCnZhciBwYWdlID0gbmV3IFdlYlBh
-Z2UoKSwgYWRkcmVzczsKCmlmIChwaGFudG9tLmFyZ3MubGVuZ3RoID09PSAwKSB7CiAgICBjb25z
-b2xlLmxvZygnVXNhZ2U6IGR1bXB1cmwuanMge1VSTH0nKTsKICAgIHBoYW50b20uZXhpdCgpOwp9
-CgovLyBodHRwOi8vc3RhY2tvdmVyZmxvdy5jb20vcXVlc3Rpb25zLzE2ODU0Nzg4L3BoYW50b21q
-cy13ZWJwYWdlLXRpbWVvdXQKcGFnZS5zZXR0aW5ncy5yZXNvdXJjZVRpbWVvdXQgPSAxMDAwMDsg
-Ly8gMTAgc2Vjb25kcwpwYWdlLm9uUmVzb3VyY2VUaW1lb3V0ID0gZnVuY3Rpb24oZSkgewogIGNv
-bnNvbGUubG9nKGUuZXJyb3JDb2RlKTsgICAvLyBpdCdsbCBwcm9iYWJseSBiZSA0MDgKICBjb25z
-b2xlLmxvZyhlLmVycm9yU3RyaW5nKTsgLy8gaXQnbGwgcHJvYmFibHkgYmUgJ05ldHdvcmsgdGlt
-ZW91dCBvbiByZXNvdXJjZScKICBjb25zb2xlLmxvZyhlLnVybCk7ICAgICAgICAgLy8gdGhlIHVy
-bCB3aG9zZSByZXF1ZXN0IHRpbWVkIG91dAogIHBoYW50b20uZXhpdCgxKTsKfTsKCmFkZHJlc3Mg
-PSBlbmNvZGVVUkkocGhhbnRvbS5hcmdzWzBdKTsKcGFnZS5vcGVuKGFkZHJlc3MsIGZ1bmN0aW9u
-IChzdGF0dXMpIHsKICAgIC8vY29uc29sZS5sb2coImluc2lkZSBwYWdlLm9wZW4oKSIpOwogICAg
-aWYgKHN0YXR1cyAhPT0gJ3N1Y2Nlc3MnKSB7CiAgICAgICAgY29uc29sZS5sb2coJ0ZhaWxlZCB0
-byBsb2FkJywgYWRkcmVzcyk7CglwaGFudG9tLmV4aXQoKTsKICAgIH0KICAgIHdpbmRvdy5zZXRU
-aW1lb3V0KGZ1bmN0aW9uKCkgewoJY29uc29sZS5sb2cocGFnZS5jb250ZW50KTsKCXBoYW50b20u
-ZXhpdCgpOwogICAgfSwgNDAwMCk7Cn0pOwo=
-====
-=cut
 
-#
-# MD5 (dumpurl.js) = f0484f9995006c7daa60cc3ffdb1403b
-#
-=dumpurl.js
-//
-// dumpurl.js - fetch, render, and dump HTML to stdout
-//
-// Jason White
-// 11-Feb-2014
-//
-var page = new WebPage(), address;
+=begin License
 
-if (phantom.args.length === 0) {
-    console.log('Usage: dumpurl.js {URL}');
-    phantom.exit();
-}
-
-// http://stackoverflow.com/questions/16854788/phantomjs-webpage-timeout
-page.settings.resourceTimeout = 10000; // 10 seconds
-page.onResourceTimeout = function(e) {
-  console.log(e.errorCode);   // it'll probably be 408
-  console.log(e.errorString); // it'll probably be 'Network timeout on resource'
-  console.log(e.url);         // the url whose request timed out
-  phantom.exit(1);
-};
-
-address = encodeURI(phantom.args[0]);
-page.open(address, function (status) {
-    //console.log("inside page.open()");
-    if (status !== 'success') {
-        console.log('Failed to load', address);
-	phantom.exit();
-    }
-    window.setTimeout(function() {
-	console.log(page.content);
-	phantom.exit();
-    }, 4000);
-});
-=cut
-
-#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-# Install in $XYMONCLIENTHOME/client/ext/.
-# Modify $XYMONCLIENTHOME/etc/clientlaunch.cfg and add this block:
-#
-#   # Apple Monitor
-#   [applemon]
-#           ENABLED
-#           ENVFILE $XYMONCLIENTHOME/etc/xymonclient.cfg
-#           CMD $XYMONCLIENTHOME/ext/apple_monitor
-#           LOGFILE $XYMONCLIENTHOME/logs/apple_monitor.log
-#           INTERVAL 10m
-#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-#
-# The apple status page currently contains three categories: Services, 
-# Store, and iCloud.  This test treats each category as a separate 
-# host, each with their own set of tests, for a total of 35 tests.
-#
-# I recommend using real, resolvable host names for each category so the 
-# conn test works.  This will keep Xymon from generating a ton of alerts 
-# in the event of transient network outages.
-#
-# hosts.cfg
-# ---------
-# group
-# 0.0.0.0         store.apple.com                 # conn NAME:"Apple Stores"
-#
-# group
-# 0.0.0.0         www.apple.com                   # conn NAME:"Apple Services"
-#
-# group
-# 0.0.0.0         www.icloud.com                  # conn NAME:"Apple iCloud"
-#
-=license
 The MIT License (MIT)
 
 Copyright (c) 2014 Jason White <jdwhite@menelos.com>
@@ -126,25 +22,106 @@ FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
 COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+=end License
 =cut
+
+#
+# apple_monitor - report status of Apple's services.
+#
+# Jason White <jdwhite@menelos.com>
+# 8-Feb-2014 (initial version)
+#
+# Initial indentation of is done with tabs; successive indentation is 
+# done with spaces. To format this code per your indentation preference, 
+# say, 4 spaces/tab stop:
+#	less -x4
+#	nano -T4
+#	vim (set tabstop=4 (also in .vimrc))
+#	vi  (set ts=4 (also in .exrc))
+#
+# Requires phantomjs (http://phantomjs.org) and the included (in this 
+# file and the xymon-ext repository) 'dumpurl.js' to render javascript 
+# and product HTML.
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+# Created with 'uuencode -m ...'. Decode with uudecode.
+
+=begin dumpurl.js
+
+begin-base64 644 dumpurl.js
+Ly8KLy8gZHVtcHVybC5qcyAtIGZldGNoLCByZW5kZXIsIGFuZCBkdW1wIEhUTUwgdG8gc3Rkb3V0
+Ci8vCi8vIEphc29uIFdoaXRlCi8vIDExLUZlYi0yMDE0Ci8vCnZhciBwYWdlID0gbmV3IFdlYlBh
+Z2UoKSwgYWRkcmVzczsKCmlmIChwaGFudG9tLmFyZ3MubGVuZ3RoID09PSAwKSB7CiAgICBjb25z
+b2xlLmxvZygnVXNhZ2U6IGR1bXB1cmwuanMge1VSTH0nKTsKICAgIHBoYW50b20uZXhpdCgpOwp9
+CgovLyBodHRwOi8vc3RhY2tvdmVyZmxvdy5jb20vcXVlc3Rpb25zLzE2ODU0Nzg4L3BoYW50b21q
+cy13ZWJwYWdlLXRpbWVvdXQKcGFnZS5zZXR0aW5ncy5yZXNvdXJjZVRpbWVvdXQgPSAxMDAwMDsg
+Ly8gMTAgc2Vjb25kcwpwYWdlLm9uUmVzb3VyY2VUaW1lb3V0ID0gZnVuY3Rpb24oZSkgewogIGNv
+bnNvbGUubG9nKGUuZXJyb3JDb2RlKTsgICAvLyBpdCdsbCBwcm9iYWJseSBiZSA0MDgKICBjb25z
+b2xlLmxvZyhlLmVycm9yU3RyaW5nKTsgLy8gaXQnbGwgcHJvYmFibHkgYmUgJ05ldHdvcmsgdGlt
+ZW91dCBvbiByZXNvdXJjZScKICBjb25zb2xlLmxvZyhlLnVybCk7ICAgICAgICAgLy8gdGhlIHVy
+bCB3aG9zZSByZXF1ZXN0IHRpbWVkIG91dAogIHBoYW50b20uZXhpdCgxKTsKfTsKCmFkZHJlc3Mg
+PSBlbmNvZGVVUkkocGhhbnRvbS5hcmdzWzBdKTsKcGFnZS5vcGVuKGFkZHJlc3MsIGZ1bmN0aW9u
+IChzdGF0dXMpIHsKICAgIC8vY29uc29sZS5sb2coImluc2lkZSBwYWdlLm9wZW4oKSIpOwogICAg
+aWYgKHN0YXR1cyAhPT0gJ3N1Y2Nlc3MnKSB7CiAgICAgICAgY29uc29sZS5sb2coJ0ZhaWxlZCB0
+byBsb2FkJywgYWRkcmVzcyk7CglwaGFudG9tLmV4aXQoKTsKICAgIH0KICAgIHdpbmRvdy5zZXRU
+aW1lb3V0KGZ1bmN0aW9uKCkgewoJY29uc29sZS5sb2cocGFnZS5jb250ZW50KTsKCXBoYW50b20u
+ZXhpdCgpOwogICAgfSwgNDAwMCk7Cn0pOwo=
+====
+
+=end dumpurl.js
+=cut
+
+#
+# MD5 (dumpurl.js) = f0484f9995006c7daa60cc3ffdb1403b
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+# Install in $XYMONCLIENTHOME/client/ext/.
+# Modify $XYMONCLIENTHOME/etc/clientlaunch.cfg and add this block:
+#
+# # Apple Monitor
+# [applemon]
+#	  ENABLED
+#	  ENVFILE $XYMONCLIENTHOME/etc/xymonclient.cfg
+#	  CMD $XYMONCLIENTHOME/ext/apple_monitor
+#	  LOGFILE $XYMONCLIENTHOME/logs/apple_monitor.log
+#	  INTERVAL 10m
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#
+# The apple status page currently contains three categories: Services, 
+# Store, and iCloud. This test treats each category as a separate host, 
+# each with their own set of tests, for a total of 35 tests.
+#
+# I recommend using real, resolvable host names for each category so the 
+# conn test works. This will keep Xymon from generating a ton of alerts 
+# in the event of transient network outages.
+#
+# hosts.cfg
+# ---------
+# group
+# 0.0.0.0         store.apple.com                 # conn NAME:"Apple Stores"
+# group
+# 0.0.0.0         www.apple.com                   # conn NAME:"Apple Services"
+# group
+# 0.0.0.0         www.icloud.com                  # conn NAME:"Apple iCloud"
 #
 
 use strict;
 use warnings;
 
 ## Globals ##
-$::PHANTOMJS	= "/usr/local/bin/phantomjs";
-$::DUMPURLJS	= "/usr/local/libexec/dumpurl.js";
-$::URL		= "http://www.apple.com/support/systemstatus/";
+$::PHANTOMJS  = "/usr/local/bin/phantomjs";
+$::DUMPURLJS  = "/usr/local/libexec/dumpurl.js";
+$::URL        = "http://www.apple.com/support/systemstatus/";
 
 # ::MACHINE/DOTS - host this test is reporting for as defined in hosts.cfg.
-#$::MACHINE	= $ENV{MACHINE};
-#$::MACHINE	= "apple";
+#$::MACHINE   = $ENV{MACHINE};
+#$::MACHINE   = "apple";
 
 %::SERVICEGROUP2MACHINE = (
-	'iCloud'	=> "www,icloud,com",
-	'Stores'	=> "store,apple,com",
-	'Services'	=> "www,apple,com"
+	'iCloud'   => "www,icloud,com",
+	'Stores'   => "store,apple,com",
+	'Services' => "www,apple,com"
 );
 
 #
@@ -177,7 +154,7 @@ while ($page_blob =~ /<table>(.+?)<\/table>/ig) {
 	#
 	while ($table =~ /<td><span\s+class=\"([^\"]+)\".+?alt=\"([^\"]+)\".+?<p class=\"affected_p\">(.*?)<\/p><\/td>/ig) {
 		my($TESTNAME) = $2;
-		my($COLOR) = "clear";
+		my($TESTCOLOR) = "clear";
 		#my($DATA) = "=" x length($servgroup)."\n${servgroup}\n"."=" x length($servgroup)."\n\n";
 		my($DATA) = "";
 		my($service) = $TESTNAME;
@@ -187,10 +164,12 @@ while ($page_blob =~ /<table>(.+?)<\/table>/ig) {
 		# Mangle into Xymon test names.
 		if ($servgroup eq "Services") {
 			$TESTNAME =~ s/iOS Device Activation/iOS Dev Act/;
-		} elsif ($servgroup eq "Stores") {
+		}
+		elsif ($servgroup eq "Stores") {
 			$TESTNAME =~ s/Store$//;
 			$TESTNAME =~ s/Products/Prod/;
-		} elsif ($servgroup eq "iCloud") {
+		}
+		elsif ($servgroup eq "iCloud") {
 			$TESTNAME =~ s/in the Cloud//i;
 			$TESTNAME =~ s/^Find My .+/Find My Device/io;
 			$TESTNAME =~ s/^Bookmarks \& iCloud Tabs.*/Bookmarks,Tabs/io;
@@ -206,12 +185,13 @@ while ($page_blob =~ /<table>(.+?)<\/table>/ig) {
 
 		my($line_color) = "";
 		if ($status eq "OK") {
-			$COLOR = "green";
-		} else {
-			$COLOR = "yellow";
+			$TESTCOLOR = "green";
+		}
+		else {
+			$TESTCOLOR = "yellow";
 		}
 
-		$DATA .= sprintf("%s: %s &%s\n\n", $service, $status, $COLOR);
+		$DATA .= sprintf("%s: %s &%s\n\n", $service, $status, $TESTCOLOR);
 
 		if ($affected !~ /^\s*$/o) {
 			$DATA .= "${affected}\n\n";
@@ -224,9 +204,9 @@ while ($page_blob =~ /<table>(.+?)<\/table>/ig) {
 		##
 
 		# STATUS - Canonical status of test and its lifetime:
-		#		 status[+LIFETIME]
-		#$STATUS = "status+25h ${::MACHINE}.${::TESTNAME} ${::COLOR}";
-		my $STATUS = "status ${MACHINE}.${TESTNAME} ${COLOR}";
+		#          status[+LIFETIME]
+		#$STATUS = "status+25h ${::MACHINE}.${TESTNAME} ${TESTCOLOR}";
+		my $STATUS = "status ${MACHINE}.${TESTNAME} ${TESTCOLOR}";
 
 		# SUMMARY - datestamp and summary of the test.
 		my $SUMMARY = scalar(localtime(time))." - ${service}: $status";
@@ -237,19 +217,20 @@ while ($page_blob =~ /<table>(.+?)<\/table>/ig) {
 		# Send to Xymon or to stdout if run interactively.
 		#
 		if (defined($ENV{XYMON})) {
-		        # "at" sign as argument means "read message data 
-		        # from stdin". DON'T USE A DASH AS THE xymon 
-		        # USAGE MESSAGE SHOWS ELSE ONLY THE SUMMARY 
-		        # INFORMATION IS DISPLAYED AND NONE OF $DATA. 
-		        # THE MANPAGE USAGE OF "@" IS CORRECT.
+			# "at" sign as argument means "read message data 
+			# from stdin". DON'T USE A DASH AS THE xymon 
+			# USAGE MESSAGE SHOWS ELSE ONLY THE SUMMARY 
+			# INFORMATION IS DISPLAYED AND NONE OF $DATA. THE 
+			# MANPAGE USAGE OF "@" IS CORRECT.
 
-		        open(XYMON, "| $ENV{XYMON} $ENV{XYMSRV} @") || do {
-		                print "Error invoking $ENV{XYMON} $ENV{XYMSRV} @ - $!";
-		                exit;
-		        };
-		        select(XYMON);
-		} else {
-		        print STDERR "*** Not invoked by Xymon; spewing to stdout ***\n\n";
+			open(XYMON, "| $ENV{XYMON} $ENV{XYMSRV} @") || do {
+				print "Error invoking $ENV{XYMON} $ENV{XYMSRV} @ - $!";
+				exit;
+			};
+			select(XYMON);
+		} 
+		else {
+			print STDERR "*** Not invoked by Xymon; spewing to stdout ***\n\n";
 		}
 
 		print $MESSAGE;

@@ -1,29 +1,7 @@
 #!/usr/bin/perl
-#
-# socket_monitor - report network socket usage.
-#
-# Jason White <jdwhite@menelos.com>
-# 17-Jan-2014
-#
-# I wrote this to track excessive socket usage reported in this thread:
-# https://discussions.apple.com/thread/5551686
-# "My network connection completely died - "failed: 49 - Can't assign 
-#  requested address"
-#
-# Also configured Xymon to collect and graph the values collected.
-#
-# Install in $XYMONCLIENTHOME/client/ext/.
-# Modify $XYMONCLIENTHOME/etc/clientlaunch.cfg and add this block:
-#
-#   # Network Socket Monitor
-#   [socketmon]
-#           ENABLED
-#           ENVFILE $XYMONCLIENTHOME/etc/xymonclient.cfg
-#           CMD $XYMONCLIENTHOME/ext/socket_monitor
-#           LOGFILE $XYMONCLIENTHOME/logs/socket_monitor.log
-#           INTERVAL 2m
-#
-=license
+
+=begin License
+
 The MIT License (MIT)
 
 Copyright (c) 2014 Jason White <jdwhite@menelos.com>
@@ -45,22 +23,60 @@ COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+=end License
 =cut
+
+#
+# socket_monitor - report network socket usage.
+#
+# Jason White <jdwhite@menelos.com>
+# 17-Jan-2014 (initial release)
+#
+# This program fetches the box.com service page and creates Xymon tests.
+#
+# I wrote this to track excessive socket usage reported in this thread:
+# https://discussions.apple.com/thread/5551686
+# "My network connection completely died - "failed: 49 - Can't assign 
+#  requested address"
+#
+# Also configured Xymon to collect and graph the values collected.
+#
+# Initial indentation of is done with tabs; successive alignment is done 
+# with spaces. To format this code per your indentation preference, say, 
+# 4 spaces per tab stop:
+#	less -x4
+#	nano -T4
+#	vim (set tabstop=4 (also in .vimrc))
+#	vi  (set ts=4 (also in .exrc))
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+# Install in $XYMONCLIENTHOME/client/ext/.
+# Modify $XYMONCLIENTHOME/etc/clientlaunch.cfg and add this block:
+#
+# # Network Socket Monitor
+# [socketmon]
+#	  ENABLED
+#	  ENVFILE $XYMONCLIENTHOME/etc/xymonclient.cfg
+#	  CMD $XYMONCLIENTHOME/ext/socket_monitor
+#	  LOGFILE $XYMONCLIENTHOME/logs/socket_monitor.log
+#	  INTERVAL 2m
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#
 
 use strict;
 #use warnings;
 
 ## Globals ##
 # ::MACHINE/DOTS - host this test is reporting for as defined in hosts.cfg.
-#$main::MACHINE	= "some,machine,domain,com"; # If reporting for another host.
-$main::MACHINE		= $ENV{MACHINE};
-$main::MACHINEDOTS	= $ENV{MACHINEDOTS};
+#$main::MACHINE     = "some,machine,domain,com"; # If reporting for another host.
+$main::MACHINE	    = $ENV{MACHINE};
+$main::MACHINEDOTS  = $ENV{MACHINEDOTS};
 
 # ::TESTNAME - the title of the test column.
-$main::TESTNAME	= 'socket';
+$main::TESTNAME     = 'socket';
 
 # ::COLOR - the canonical test color.
-$main::COLOR	= "clear";
+$main::COLOR        = "clear";
 
 # ::DATA - diagnostic data sent to the server along with status and summary.
 $main::DATA	= "";
@@ -68,17 +84,16 @@ $main::DATA	= "";
 # ::PRIORITY - the relative weight of test colors, used for determining
 #	when to update $main::COLOR while evaluating test criterion.
 %main::PRIORITY = (
-	"red" => 6,
-	"yellow" => 5,
-	"green" => 4,
-	"blue" => 1,
-	"clear" => 1
+	"red"    => 4,
+	"yellow" => 3,
+	"green"  => 2,
+	"clear"  => 1
 );
 
 #=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 $main::YELLOW_MARK = 500;
-$main::RED_MARK = 700;
+$main::RED_MARK    = 700;
 
 $main::NETSTAT_CMD = "netstat -an -f inet";
 
@@ -93,17 +108,17 @@ open(NETSTAT, "${main::NETSTAT_CMD}|") || do {
 };
 
 %main::count = (
-	"CLOSED"	=> 0,
-	"LISTEN"	=> 0,
-	"SYN_SENT"	=> 0,
-	"SYN_RCVD"	=> 0,
-	"ESTABLISHED"	=> 0,
-	"CLOSE_WAIT"	=> 0,
-	"LAST_ACK"	=> 0,
-	"FIN_WAIT_1"	=> 0,
-	"FIN_WAIT_2"	=> 0,
-	"CLOSING"	=> 0,
-	"TIME_WAIT"	=> 0
+	"CLOSED"      => 0,
+	"LISTEN"      => 0,
+	"SYN_SENT"    => 0,
+	"SYN_RCVD"    => 0,
+	"ESTABLISHED" => 0,
+	"CLOSE_WAIT"  => 0,
+	"LAST_ACK"    => 0,
+	"FIN_WAIT_1"  => 0,
+	"FIN_WAIT_2"  => 0,
+	"CLOSING"     => 0,
+	"TIME_WAIT"   => 0
 );
 
 while(<NETSTAT>) {
@@ -120,16 +135,17 @@ foreach my $state (sort keys %main::count) {
 	if ($main::count{$state} < $main::YELLOW_MARK) {
 		$line_color = "green";
 		$main::status = "OK";
-	} elsif ($main::count{$state} >= $main::YELLOW_MARK) {
+	}
+	elsif ($main::count{$state} >= $main::YELLOW_MARK) {
 		$line_color = "yellow";
 		$main::status = "lots of sockets in use";
-	} elsif ($main::count{$state} >= $main::RED_MARK) {
+	}
+	elsif ($main::count{$state} >= $main::RED_MARK) {
 		$line_color = "red";
 		$main::status = "high number of sockets in use";
 	}
 
-	$main::DATA .= sprintf("%15s: % 4d",
-		$state, $main::count{$state});
+	$main::DATA .= sprintf("%15s: % 4d", $state, $main::count{$state});
 
 	# Now eveluate the current line's color and see if it's priority
 	# is higher than the canonical color. If so, update the
@@ -142,7 +158,7 @@ foreach my $state (sort keys %main::count) {
 		}
 	}
 
-        $main::DATA .= "\n";
+	$main::DATA .= "\n";
 }
 
 ##
@@ -168,11 +184,12 @@ if (defined($ENV{XYMON})) {
 	# THE SUMMARY INFORMATION IS DISPLAYED AND NONE OF $main::DATA.
 	# THE MANPAGE USAGE OF "@" IS CORRECT.
 	open(XYMON, "| $ENV{XYMON} $ENV{XYMSRV} @") || do {
-	print "Error invoking $ENV{XYMON} $ENV{XYMSRV} @ - $!";
+		print "Error invoking $ENV{XYMON} $ENV{XYMSRV} @ - $!";
 		exit;
 	};
 	select(XYMON);
-} else {
+}
+else {
 	print STDERR "*** Not invoked by Xymon; sending to stdout ***\n\n";
 }
 
