@@ -19,12 +19,20 @@ if (phantom.args.length === 0) {
 	phantom.exit();
 }
 
+// Set user/pass for pages using HTTP basic auth.
+// page.settings.userName = "user";
+// page.settings.password = "pass";
+
+//
+// Ensure that this script doesn't hang indefinitely by setting a 10 
+// second timeout.
+//
 // http://stackoverflow.com/questions/16854788/phantomjs-webpage-timeout
 page.settings.resourceTimeout = 10000; // 10 seconds
 page.onResourceTimeout = function(e) {
-	console.log(e.errorCode);   // Probably be 408
-	console.log(e.errorString); // Probably be 'Network timeout on resource'
-	console.log(e.url);         // URL whose request timed out
+	console.log(e.errorCode);   // Probably be 408.
+	console.log(e.errorString); // Probably be 'Network timeout on resource'.
+	console.log(e.url);         // URL whose request timed out.
 	phantom.exit(1);
 };
 
@@ -37,5 +45,5 @@ page.open(address, function (status) {
 	window.setTimeout(function() {
 		console.log(page.content);
 		phantom.exit();
-	}, 4000); // 4 second timeout.
+	}, 4000); // Render for 4 seconds, then dump it.
 });
