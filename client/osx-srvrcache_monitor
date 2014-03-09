@@ -41,7 +41,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	  ENVFILE $XYMONCLIENTHOME/etc/xymonclient.cfg
 #	  CMD $XYMONCLIENTHOME/ext/osx-srvrcache_monitor
 #	  LOGFILE $XYMONCLIENTHOME/logs/osx-srvrcache_monitor.log
-#	  INTERVAL 10m
+#	  INTERVAL 5m
 #
 # serveradmin must run as root. Modify /etc/sudoers as follows:
 #
@@ -62,6 +62,9 @@ $main::MACHINE  = $ENV{MACHINE};
 
 $main::SERVERADMIN =
 	"/Applications/Server.app/Contents/ServerRoot/usr/sbin/serveradmin";
+
+# Timestamp for logfile.
+print scalar(localtime(time)),"\n";
 
 my(@details);
 open(STATUS,"sudo ${main::SERVERADMIN} fullstatus caching |") || do {
@@ -131,8 +134,6 @@ foreach my $hash (@main::cachedetails) {
 	$main::DATA .= sprintf("%15s: %sM\n", 
 		$hash->{LocalizedType}, int($hash->{BytesUsed}/1024/1024));
 }
-
-print $main::DATA,"\n";
 
 ##
 ## Generate status report.
