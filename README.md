@@ -169,12 +169,12 @@ X Server caching server.
 
 Example output:
 
-     Cache Size: 74866M
-     Cache Used: 1728M (2.3%)
+       Cache Size: 74866M
+       Cache Used: 1728M (2.3%)
 
-   Mac Software: 1509M
-   iOS Software: 153M
-          Books: 1M
-         Movies: 0M
-          Music: 0M
-          Other: 63M
+     Mac Software: 1509M
+     iOS Software: 153M
+            Books: 1M
+           Movies: 0M
+            Music: 0M
+            Other: 63M
