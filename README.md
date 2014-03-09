@@ -156,6 +156,25 @@ Example output from the iCloud host, Calendar service test:
 
 client/dumpurl.js
 -----------------
+
 Takes one URL as an argument, loads the page, renders any Javascript 
 present, and dumps the result to STDOUT.  Required by 
 client/apple_monitor.
+
+client/osx-srvrcache_monitor
+----------------------------
+
+Monitors the running state and cache utilization by data type of the OS 
+X Server caching server.
+
+Example output:
+
+     Cache Size: 74866M
+     Cache Used: 1728M (2.3%)
+
+   Mac Software: 1509M
+   iOS Software: 153M
+          Books: 1M
+         Movies: 0M
+          Music: 0M
+          Other: 63M
