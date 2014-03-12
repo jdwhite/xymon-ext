@@ -178,3 +178,48 @@ Example output:
            Movies: 0M
             Music: 0M
             Other: 63M
+
+client/afs_servmon
+------------------
+
+Monitors an AFS file server through the use of rxdebug and 'bos status' 
+commands.
+
+Example output:
+
+    status .afs green Wed Mar 12 14:30:41 2014 - afs: OK
+  
+    free packets: 289
+    calls waiting: 0 &green
+    threads idle: 11
+    server connections: 4
+    client connections: 14
+    peer structs: 8
+    call structs: 17
+    free calls: 17
+    packet allocation failures: 0
+    calls: 7464
+    allocs: 1223062
+    read data: 1160144
+    read ack: 35370
+    read dup: 277
+    read spurious: 0
+    read busy: 0
+    read abort: 2
+    read ackall: 0
+    read challenge: 143
+    read response: 102
+    sent data: 57356
+    sent resent: 208
+    sent ack: 583442
+    sent busy: 1
+    sent abort: 39
+    sent ackall: 0
+    sent challenge: 102
+    sent response: 143
+    
+    Instance buserver, disabled, currently shutdown. &green
+    Instance ptserver, currently running normally. &green
+    Instance vlserver, currently running normally. &green
+    Instance fs, currently running normally. &green
+        Auxiliary status is: file server running. &green
