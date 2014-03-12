@@ -223,3 +223,41 @@ Example output:
     Instance vlserver, currently running normally. &green
     Instance fs, currently running normally. &green
         Auxiliary status is: file server running. &green
+
+client/raidframe
+----------------
+
+Monitors status of a raidframe RAID array. Tested under NetBSD.
+
+Example ouptut:
+
+    status .raidframe green raidframe OK Wed Mar 12 15:08:53 2014
+    
+    Components:
+               /dev/wd0a: optimal &green
+               /dev/wd1a: optimal &green
+    No spares.
+    Component label for /dev/wd0a:
+       Row: 0, Column: 0, Num Rows: 1, Num Columns: 2
+       Version: 2, Serial Number: 2013122701, Mod Counter: 151
+       Clean: No, Status: 0
+       sectPerSU: 128, SUsPerPU: 1, SUsPerRU: 1
+       Queue size: 100, blocksize: 512, numBlocks: 1465148928
+       RAID Level: 1
+       Autoconfig: Yes
+       Root partition: Yes
+       Last configured as: raid1
+    Component label for /dev/wd1a:
+       Row: 0, Column: 1, Num Rows: 1, Num Columns: 2
+       Version: 2, Serial Number: 2013122701, Mod Counter: 151
+       Clean: No, Status: 0
+       sectPerSU: 128, SUsPerPU: 1, SUsPerRU: 1
+       Queue size: 100, blocksize: 512, numBlocks: 1465148928
+       RAID Level: 1
+       Autoconfig: Yes
+       Root partition: Yes
+       Last configured as: raid1
+    Parity status: clean &green
+    Reconstruction is 100% complete. &green
+    Parity Re-write is 100% complete. &green
+    Copyback is 100% complete. &green
