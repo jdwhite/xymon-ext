@@ -261,3 +261,15 @@ Example ouptut:
     Reconstruction is 100% complete. &green
     Parity Re-write is 100% complete. &green
     Copyback is 100% complete. &green
+
+client/dwm_report
+-----------------
+
+A Daily/Weekly/Monthly report test for NetBSD designed to scan for 
+interesting keywords in these reports and report a status accordingly. 
+This is just a beginning framework. I'm not perfrectly happy with it, 
+but i'm throwing it out for other to see and possibly stimulate 
+discussion on how to make this test better. I'd also like to support 
+Linux periodic reports in the future.
+
+
