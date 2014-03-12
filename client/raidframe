@@ -156,22 +156,3 @@ if (defined($ENV{XYMON})) {
 }
 
 exit;
-
-__DATA__
-opus:/home/jdwhite# bos status localhost -local
-Instance buserver, temporarily disabled, stopped for too many errors, 
-currently shutdown.
-Instance ptserver, temporarily disabled, stopped for too many errors, 
-currently shutdown.
-Instance vlserver, temporarily disabled, stopped for too many errors, 
-currently shutdown.
-Instance fs, currently running normally.
-    Auxiliary status is: file server running.
-
-
-opus:/usr/pkg/etc/xymon# bos status localhost -local
-Instance buserver, currently running normally.
-Instance ptserver, currently running normally.
-Instance vlserver, currently running normally.
-Instance fs, currently running normally.
-    Auxiliary status is: file server running.
