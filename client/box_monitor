@@ -1,5 +1,10 @@
 #!/usr/bin/perl
-
+#
+# box_monitor - report status of Box.com services
+#
+# Jason White <jdwhite@menelos.com>
+# 12-Feb-2014 (initial version)
+#
 =begin License
 
 The MIT License (MIT)
@@ -26,11 +31,6 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =end License
 =cut
 
-#
-# box_monitor - report status of Box.com services
-#
-# Jason White <jdwhite@menelos.com>
-# 12-Feb-2014 (initial version)
 #
 # This program fetches the box.com service page and creates Xymon tests.
 #

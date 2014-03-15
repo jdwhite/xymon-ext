@@ -1,5 +1,10 @@
 #!/usr/bin/perl
-
+#
+# dropbox_monitor - report status of Dropbox service
+#
+# Jason White <jdwhite@menelos.com>
+# 17-Jan-2014 (initial release)
+#
 =begin License
 
 The MIT License (MIT)
@@ -26,11 +31,6 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =end License
 =cut
 
-#
-# dropbox_monitor - report status of Dropbox service
-#
-# Jason White <jdwhite@menelos.com>
-# 17-Jan-2014 (initial release)
 #
 # Initial indentation of is done with tabs; successive alignment is done 
 # with spaces. To format this code per your indentation preference, say, 

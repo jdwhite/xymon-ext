@@ -1,5 +1,10 @@
 #!/usr/bin/perl
-
+#
+# google_monitor - report status of Google services
+#
+# Jason White <jdwhite@menelos.com>
+# 8-Feb-2014 (initial release)
+#
 =begin License
 
 The MIT License (MIT)
@@ -26,11 +31,6 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =end License
 =cut
 
-#
-# google_monitor - report status of Google services
-#
-# Jason White <jdwhite@menelos.com>
-# 8-Feb-2014 (initial release)
 #
 # This program fetches the google services logs in JSON format and creates
 # Xymon tests.
