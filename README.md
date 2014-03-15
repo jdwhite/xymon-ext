@@ -1,7 +1,7 @@
 xymon-ext
 =========
 
-External Xymon tests.
+External Xymon tests and support programs.
 
 These tests use a lot of the same code, and I plan to place that code into a perl module down the road.
 
@@ -161,7 +161,7 @@ Takes one URL as an argument, loads the page, renders any Javascript
 present, and dumps the result to STDOUT.  Required by 
 client/apple_monitor.
 
-client/osx-srvrcache_monitor
+client/osx-cacheserver_monitor
 ----------------------------
 
 Monitors the running state and cache utilization by data type of the OS 
@@ -169,15 +169,29 @@ X Server caching server.
 
 Example output:
 
-       Cache Size: 74866M
-       Cache Used: 1728M (2.3%)
+                     Active: yes
+                 Cache Free: 67.91G
+                Cache Limit: 78.5G
+               Cache Status: OK
+                 Cache Used: 10.59G (13.5%)
+          Cached Item Count: 77
+                      Peers: none
+                       Port: 51330 (dynamic)
+        Registration Status: 1 (Registered)
+             Startup Status: OK
+    Total Bytes From Origin: 8.78G
+     Total Bytes From Peers: 0
+      Total Bytes Requested: 8.78G
+       Total Bytes Returned: 15.19G (42.2% efficiency)
+                      state: RUNNING
+    
+               Mac Software:  9199M
+               iOS Software:   622M
+                      Books:     2M
+                     Movies:     0M
+                      Music:     0M
+                      Other:   769M
 
-     Mac Software: 1509M
-     iOS Software: 153M
-            Books: 1M
-           Movies: 0M
-            Music: 0M
-            Other: 63M
 
 client/afs_servmon
 ------------------

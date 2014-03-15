@@ -1,5 +1,10 @@
 #!/usr/bin/env perl
-
+#
+# osx-cacheserver_monitor - report OS X Server caching server status and usage.
+#
+# Jason White <jdwhite@menelos.com>
+# 8-Mar-2014 (first release)
+#
 =begin License
 
 The MIT License (MIT)
@@ -27,20 +32,15 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =cut
 
 #
-# osx-srvrcache_monitor - report OS X Server caching server status and usage.
-#
-# Jason White <jdwhite@menelos.com>
-# 8-Mar-2014 (first release)
-#
 # Install in $XYMONCLIENTHOME/client/ext/.
 # Modify $XYMONCLIENTHOME/etc/clientlaunch.cfg and add this block:
 #
 # # OS X Server caching server
-# [osx_srvrcache_mon]
+# [osx_cacheserver_mon]
 #	  ENABLED
 #	  ENVFILE $XYMONCLIENTHOME/etc/xymonclient.cfg
-#	  CMD $XYMONCLIENTHOME/ext/osx-srvrcache_monitor
-#	  LOGFILE $XYMONCLIENTHOME/logs/osx-srvrcache_monitor.log
+#	  CMD $XYMONCLIENTHOME/ext/osx-cacheserver_monitor
+#	  LOGFILE $XYMONCLIENTHOME/logs/osx-cacheserver_monitor.log
 #	  INTERVAL 5m
 #
 # serveradmin must run as root. Modify /etc/sudoers as follows:
@@ -48,38 +48,85 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #   * Add the following line to the bottom of the config file to allow
 #     user xymon to execute the serveradmin command without a password:
 #
-#        xymon   ALL= NOPASSWD: /Applications/Server.app/Contents/ServerRoot/usr/sbin/serveradmin
+#        xymon   ALL= NOPASSWD: /Applications/Server.app/Contents/ServerRoot/usr/sbin/serveradmin,/usr/bin/sqlite3
 #
 
 use strict;
 use warnings;
+use Number::Format qw(:subs :vars);
 
 ## Globals ##
-$main::TESTNAME = 'srvrcache';
-$main::COLOR    = "clear";	# uncertain by default
+
+#
+# $main::base tells the Number::Format module how to convert byte values.
+# If you want to use the traditional SI units (kilo, mega, giga -- 
+# powers of 2) representation of a kilobyte as 1024 bytes, set to 1024.
+# If you want to use what Apple and drive manufactures use to inflate 
+# their numbers, set to 1000.
+#
+#$main::base = 1024; # Author's preference.
+$main::base = 1000;  # What Apple uses.
+
+$main::TESTNAME = 'cacheserver';
+$main::COLOR    = "clear"; # uncertain by default
 $main::DATA     = "";
 $main::MACHINE  = $ENV{MACHINE};
 
 $main::SERVERADMIN =
 	"/Applications/Server.app/Contents/ServerRoot/usr/sbin/serveradmin";
 
-# Timestamp for logfile.
-print scalar(localtime(time)),"\n";
+%main::stats = ();
+%main::settings = ();
+@main::cachedetails = ();
+@main::peerdetails = ();
 
+# Timestamp for logfile.
+#print scalar(localtime(time)),"\n";
+
+my $megafmt = new Number::Format(
+	-thousands_sep => '', # rrd doesn't like separators.
+	#-MEGA_SUFFIX  => ' M'
+);
+
+#
+# Get caching server settings.
+#
+open(SETTINGS,"sudo ${main::SERVERADMIN} settings caching |") || do {
+	$main::COLOR = "red";
+	$main::status = "Error getting cache settings - $!";
+};
+while(<SETTINGS>) {
+	s/^caching://;
+	chomp;
+
+	my($key, $val) = split(/ = /, $_);
+	$val =~ s/\"//go;
+
+	$main::settings{$key} = $val;
+}
+close(SETTINGS);
+
+#
+# Fetch cached item count.
+#
+$main::DBPath = "$main::settings{DataPath}/AssetInfo.db";
+open(DB, "sudo sqlite3 $main::DBPath 'select count(*) from ZASSET' |");
+chomp($main::stats{CachedItemCount} = <DB>);
+close(DB);
+
+#
+# Read status information and process.
+#
 my(@details);
 open(STATUS,"sudo ${main::SERVERADMIN} fullstatus caching |") || do {
 	$main::COLOR = "red";
 	$main::status = "Error getting cache status - $!";
 };
 
-#
-# Read status information and process.
-#
-%main::stats = ();
-@main::cachedetails = ();
 while(<STATUS>) {
 	s/^caching://;
 	chomp;
+	
 	if (/^CacheDetails:_array_index:(\d+):(.+)\s=\s(.+)$/io) {
 		#
 		# These are the caching details broken down by data type.
@@ -88,12 +135,21 @@ while(<STATUS>) {
 		$val =~ s/\"//go;
 		$main::cachedetails[$element]{$key} = $val;
 	}
+	elsif (/^Peers:_array_index:(\d+):(.+)\s=\s(.+)$/io) {
+		#
+		# These are the caching details broken down by data type.
+		#
+		my($element, $key, $val) = ($1, $2, $3);
+		$val =~ s/\"//go;
+		$main::peerdetails[$element]{$key} = $val;
+	}
 	else {
 		#
 		# Metadata regarding the cache (status, size, utilization, etc.)
 		#
 		my($key, $val) = split(/ = /, $_);
 		$val =~ s/\"//go;
+		$val =~ s/_empty_array/none/;
 		$main::stats{$key} = $val;
 	}
 }
@@ -105,34 +161,88 @@ close(STATUS);
 if ($main::stats{state} eq "RUNNING") {
 	$main::COLOR = "green";
 	$main::status = $main::stats{state};
-
-	$main::DATA .= sprintf("%15s: %sM\n%15s: %sM (%0.1f%%)\n",
-		"Cache Size", int($main::stats{CacheLimit}/1024/1024),
-		"Cache Used", int($main::stats{CacheUsed}/1024/1024),
-		($main::stats{CacheUsed} / $main::stats{CacheLimit}) * 100
-	);
 }
 elsif ($main::stats{state} eq "STOPPED") {
 	# A stopped caching server doesn't provide cache size info.
 	$main::COLOR = "yellow";
 	$main::status = $main::stats{state};
-
-	$main::DATA .= sprintf("%15s: %sM\n",
-		"Cache Used", int($main::stats{CacheUsed}/1024/1024));
 }
 else {
 	$main::COLOR = "red"; # unknown state
 	$main::status = $main::stats{state};
 }
 
-$main::DATA .= "\n";
+#
+# Status data.
+#
+foreach my $field (sort keys %main::stats) {
+	$main::DATA .= sprintf("%25s: ",
+		spacer($field));
+
+	if ($field =~ /Bytes/) {
+		$main::DATA .= sprintf("%s",
+			format_bytes($main::stats{$field},
+			    base => $main::base));
+	}
+	elsif ($field =~ /Cache(Free|Limit|Used)/) {
+		$main::DATA .= sprintf("%s",
+			format_bytes($main::stats{$field},
+			    base => $main::base));
+
+		if ($field eq "CacheUsed") {
+			$main::DATA .= sprintf(" (%0.1f%%)",
+				($main::stats{CacheUsed} / $main::stats{CacheLimit}) * 100);
+		}
+	}
+	else {
+		$main::DATA .= sprintf("%s",
+			 $main::stats{$field});
+	}
+
+	if ($field eq "Port") {
+		$main::DATA .=
+		    ($main::settings{Port} == 0) ? " (dynamic)" : " (static)";
+	}
+
+	if ($field =~ /TotalBytesReturned/) {
+		$main::DATA .= sprintf(" (%.1f%% efficiency)",
+			(100 - ($main::stats{"TotalBytesRequested"} /
+			 $main::stats{TotalBytesReturned}) * 100));
+	}
+	
+	if ($field =~ /RegistrationStatus/) {
+		my(@regstatus) = ("NOT YET REGISTERED", "Registered");
+		$main::DATA .= sprintf(" (%s)",
+			$regstatus[$main::stats{$field}]);
+	}
+	
+	$main::DATA .= "\n";
+}
+
+#
+# Peer info.
+#
+foreach my $hash (@main::peerdetails) {
+	$main::DATA .= "\n";
+	foreach my $key (sort keys %$hash) {
+		$main::DATA .= sprintf("%25s: %s\n", 
+			"Peer $key", $hash->{$key});
+	}
+}
 
 #
 # Display usage by type.
 #
+$main::DATA .= "\n";
 foreach my $hash (@main::cachedetails) {
-	$main::DATA .= sprintf("%15s: %sM\n", 
-		$hash->{LocalizedType}, int($hash->{BytesUsed}/1024/1024));
+	# I chose to display these values in megabytes for graphing purposes.
+	# If you're not going to be graphing this data, you may wish to 
+	# modify the format_bytes call below to match the others.
+	$main::DATA .= sprintf("%25s: %6s\n", 
+		$hash->{LocalizedType},
+		$megafmt->format_bytes($hash->{BytesUsed},
+			base => $main::base,
+			unit => 'M', precision => 0));
 }
 
 ##
@@ -171,6 +281,18 @@ print $main::MESSAGE;
 close(XYMON);
 
 exit;
+
+sub spacer
+#
+# Add spaces before a series of one or more capitalized letters in a string.
+# I.E. "TotalBytesRequested" => "Total Bytes Requested".
+#
+{
+        my($string) = shift(@_);
+        $string =~ s/([^A-Z\s])([A-Z])/$1 $2/g;
+
+        return $string;
+}
 
 __END__
 
