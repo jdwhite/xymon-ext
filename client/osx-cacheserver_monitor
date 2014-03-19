@@ -205,9 +205,17 @@ foreach my $field (sort keys %main::stats) {
 	}
 
 	if ($field =~ /TotalBytesReturned/) {
-		$main::DATA .= sprintf(" (%.1f%% efficiency)",
-			(100 - ($main::stats{"TotalBytesRequested"} /
-			 $main::stats{TotalBytesReturned}) * 100));
+		my($efficiency) = 0;
+		if ($main::stats{TotalBytesReturned} > 0) {
+			$efficiency = (
+			    100 - 
+			    ($main::stats{"TotalBytesRequested"} /
+			    $main::stats{TotalBytesReturned})
+			    * 100
+			);
+		}
+			
+		$main::DATA .= sprintf(" (%.1f%% efficiency)", $efficiency);
 	}
 	
 	if ($field =~ /RegistrationStatus/) {
