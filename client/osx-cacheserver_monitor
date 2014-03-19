@@ -190,8 +190,13 @@ foreach my $field (sort keys %main::stats) {
 			    base => $main::base));
 
 		if ($field eq "CacheUsed") {
-			$main::DATA .= sprintf(" (%0.1f%%)",
-				($main::stats{CacheUsed} / $main::stats{CacheLimit}) * 100);
+			my($percent_used) = 0;
+			if ($main::stats{CacheLimit} > 0) {
+				$percent_used = ($main::stats{CacheUsed} /
+				                 $main::stats{CacheLimit}) * 100;
+			}
+
+			$main::DATA .= sprintf(" (%0.1f%%)", $percent_used);
 		}
 	}
 	else {
@@ -205,9 +210,9 @@ foreach my $field (sort keys %main::stats) {
 	}
 
 	if ($field =~ /TotalBytesReturned/) {
-		my($efficiency) = 0;
+		my($percent_efficient) = 0;
 		if ($main::stats{TotalBytesReturned} > 0) {
-			$efficiency = (
+			$percent_efficient = (
 			    100 - 
 			    ($main::stats{"TotalBytesRequested"} /
 			    $main::stats{TotalBytesReturned})
@@ -215,7 +220,7 @@ foreach my $field (sort keys %main::stats) {
 			);
 		}
 			
-		$main::DATA .= sprintf(" (%.1f%% efficiency)", $efficiency);
+		$main::DATA .= sprintf(" (%.1f%% efficiency)", $percent_efficient);
 	}
 	
 	if ($field =~ /RegistrationStatus/) {
