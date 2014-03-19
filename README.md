@@ -1,15 +1,18 @@
 xymon-ext
 =========
-
 External Xymon tests and support programs.
 
 These tests use a lot of the same code, and I plan to place that code into a perl module down the road.
+
+License
+-------
+The items in this repisotiry are licensed under the [MIT license](http://opensource.org/licenses/MIT), except for client/dumpurl.js which has no license.
 
 client/socket_monitor
 ---------------------
 Monitors network socket utilization that, in excess, causes the "Can't 
 assign requested address" error that exists in OS X Mavericks 10.9.1. 
-More information can be found at https://discussions.apple.com/thread/5551686
+More information can be found [here](https://discussions.apple.com/thread/5551686).
 
     Sun Feb 23 21:43:31 2014 - socket: OK
 
@@ -79,7 +82,6 @@ page. The author would be grateful for any reports of unknown type codes.
 
 client/box_monitor
 ------------------
-
 Monitors Box.com cloud services using data retrieved from 
 http://status.box.com. Each service is reported as a separate test.  
 Example output from the sync service test:
@@ -117,7 +119,6 @@ box2localtime().
 
 client/apple_monitor
 --------------------
-
 Monitors Apple's numerous services using data retrieved from 
 http://www.apple.com/support/systemstatus/. Because Apple's status page 
 requires javascript, this test requires phantiomjs 
@@ -156,14 +157,12 @@ Example output from the iCloud host, Calendar service test:
 
 client/dumpurl.js
 -----------------
-
 Takes one URL as an argument, loads the page, renders any Javascript 
 present, and dumps the result to STDOUT.  Required by 
 client/apple_monitor.
 
 client/osx-cacheserver_monitor
 ----------------------------
-
 Monitors the running state and cache utilization by data type of the OS 
 X Server caching server.
 
@@ -195,7 +194,6 @@ Example output:
 
 client/afs_servmon
 ------------------
-
 Monitors an AFS file server through the use of rxdebug and 'bos status' 
 commands.
 
@@ -240,7 +238,6 @@ Example output:
 
 client/raidframe
 ----------------
-
 Monitors status of a raidframe RAID array. Tested under NetBSD.
 
 Example ouptut:
@@ -278,12 +275,9 @@ Example ouptut:
 
 client/dwm_report
 -----------------
-
 A Daily/Weekly/Monthly report test for NetBSD designed to scan for 
 interesting keywords in these reports and report a status accordingly. 
 This is just a beginning framework. I'm not perfrectly happy with it, 
 but i'm throwing it out for other to see and possibly stimulate 
 discussion on how to make this test better. I'd also like to support 
 Linux periodic reports in the future.
-
-
