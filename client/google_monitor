@@ -151,13 +151,15 @@ $main::EVENTLOG = decode_json $main::json_service_log;
 %main::MESSAGE_TYPE_COLOR = (
 	"1" => "yellow", # Service disruption.
 	"2" => "red",    # Service outage?? (need outage example)
-	"3" => "green"   # Service restored.
+	"3" => "green",  # Service restored.
+	"4" => "green"   # Incident report posted.
 );	
 
 %main::MESSAGE_TYPE_STRING = (
 	"1" => "Service disruption",
 	"2" => "Service outage",    # need confirmation
-	"3" => "OK"
+	"3" => "OK",
+	"4" => "OK; incident report posted"
 );
 
 #
