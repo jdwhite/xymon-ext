@@ -114,7 +114,7 @@ wins_check
 
 	$Xymon::STATUS_COLOR = "clear";
 
-	open(NMBLOOKUP, "$::NMBLOOKUP -U $MACHINEADDR -R $hosts |" || die "$!";
+	open(NMBLOOKUP, "$::NMBLOOKUP -U $MACHINEADDR -R $hosts |") || die "$!";
 	while(<NMBLOOKUP>) {
 		#print "debug:=>$_";
 		next if /^\s*$/o;
