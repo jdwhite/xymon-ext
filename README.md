@@ -281,3 +281,14 @@ This is just a beginning framework. I'm not perfrectly happy with it,
 but i'm throwing it out for other to see and possibly stimulate 
 discussion on how to make this test better. I'd also like to support 
 Linux periodic reports in the future.
+
+server/wins
+-----------
+This test queries WINS servers and checked for a supplied expected 
+result.
+
+Example output:
+    Lookup: windc1 => MISMATCH! expected=1.2.3.1, received=1.2.3.5 windc1<00> &red
+    Lookup: windc2 => 1.2.3.2 windc2<00> &green
+    Lookup: windc3 => 1.2.3.3 windc3<00> &green
+    Lookup: bogon => name_query failed to find name bogon &red
