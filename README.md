@@ -30,137 +30,6 @@ More information can be found [here](https://discussions.apple.com/thread/555168
        SYN_SENT:   15 green
       TIME_WAIT:    0 green
 
-client/dropbox_monitor
-----------------------
-Monitors status of Dropbox service by scraping http://status.dropbox.com 
-and examing the string after "Dropbox is ".
-
-    Sun Feb 23 21:41:23 2014 - status: running normally.
-    
-    Dropbox is running normally. green
-
-client/google_monitor
----------------------
-Monitors Google Apps services using JSON data retrieved from 
-http://www.google.com/appsstatus/json/en. Each service is reported as a 
-separate test.  Example output from the Gmail test:
-
-    Sun Feb 23 20:35:11 2014 - Gmail: OK
- 
-    Gmail: OK green
- 
-    green Thu Feb  6 18:00:00 2014 [resolved]
-             The problem with Gmail should be resolved. We apologize for the 
-             inconvenience and thank you for your patience and continued support.
-
-             Additional Info:
-             * New messages should no longer be delayed. Messages stuck in the backlog will continue be delivered over the next few hours.
-
-    yellow Thu Feb  6 14:29:00 2014 [resolved]
-              Gmail service has already been restored for some users, and we 
-              expect a resolution for all users in the near future. Please note 
-              this time frame is an estimate and may change.
- 
-    yellow Thu Feb  6 14:07:00 2014 [resolved]
-              Our team is continuing to investigate this issue. We will provide 
-              an update by Thu Feb  6 16:00:00 2014 with more information about 
-              this problem. Thank you for your patience.
-
-              Additional Info:
-              * Some users may be experiencing delays in sending and receiving emails.
-
-    yellow Thu Feb  6 13:15:00 2014 [resolved]
-               We're investigating reports of an issue with Gmail. We will 
-               provide more information shortly. 
-
-    Source: http://www.google.com/appsstatus
-
-Google_monitor has not been tested against a full service outage, so the 
-event type is unknown to the author at this time. Unknown event types 
-are flagged as yellow and diagnostic data will be presented on the test 
-page. The author would be grateful for any reports of unknown type codes. 
-
-client/box_monitor
-------------------
-Monitors Box.com cloud services using data retrieved from 
-http://status.box.com. Each service is reported as a separate test.  
-Example output from the sync service test:
-
-    Sun Feb 23 21:31:22 2014 - sync: Up
-    
-    sync: Up green
-    
-    green Thu Feb 20, 2014 10:36PM CST
-       The Sync downloads delay and notifications issue is resolved as of 
-       8:36 p.m. PST. We apologize for any inconvenience.
-
-    red Thu Feb 20, 2014  6:53PM CST
-       Sync downloads and realtime notifications within the web 
-       interface are delayed for some users.
-
-    green Wed Feb 19, 2014  5:59PM CST
-       The issue with Sync and notifications is resolved as of 3:59 p.m. 
-       PST. We apologize for any inconvenience.
-
-    red Wed Feb 19, 2014  3:00PM CST
-       Today starting at 1:00pm PST, Box Sync and realtime notifications 
-       within the web interface are delayed.
-
-    Source: http://status.box.com
-
-The extended log is only available for tests that have experienced 
-issues in the past five days. Please note that while the timestamp at 
-the beginning of each event log entry is converted to the time zone of 
-your choice, any time references in the body of the event are not since 
-the formats of those are more free-form.  I do plan to try and address 
-this in a later release as well as automatically determine the local 
-time zone so it doesn't have to be hard coded at the end of 
-box2localtime().
-
-client/apple_monitor
---------------------
-Monitors Apple's numerous services using data retrieved from 
-http://www.apple.com/support/systemstatus/. Because Apple's status page 
-requires javascript, this test requires phantiomjs 
-(http://phantomjs.org) and the included 'dumpurl.js' file to renter the 
-javascript and produce HTML this test can consume.  Be sure to modify 
-the following variables in apple_monitor accordingly.
-
-    $::PHANTOMJS    = "/usr/local/bin/phantomjs";
-    $::DUMPURLJS    = "/usr/local/libexec/dumpurl.js";
-
-Apple's status page currently includes three main service categories: 
-Services, Store, and iCloud.  This test treats each category as a 
-separate host, each with their own set of tests, for a total of 35 
-tests.  The hosts.cfg file should contain the following:
-
-    group
-    0.0.0.0         store.apple.com                 # conn NAME:"Apple Stores"
-
-    group
-    0.0.0.0         www.apple.com                   # conn NAME:"Apple Services"
-
-    group
-    0.0.0.0         www.icloud.com                  # conn NAME:"Apple iCloud"
-
-I recommend using real, resolvable host names for each category so the 
-conn test works.  This will keep Xymon from generating a ton of alerts 
-in the event of transient network outages.
-
-Example output from the iCloud host, Calendar service test:
-
-    Sun Feb 23 22:01:42 2014 - Calendar: OK
-
-    Calendar: OK green
-
-    Source: http://www.apple.com/support/systemstatus/
-
-client/dumpurl.js
------------------
-Takes one URL as an argument, loads the page, renders any Javascript 
-present, and dumps the result to STDOUT.  Required by 
-client/apple_monitor.
-
 client/osx-cacheserver_monitor
 ----------------------------
 Monitors the running state and cache utilization by data type of the OS 
@@ -190,7 +59,6 @@ Example output:
                      Movies:     0M
                       Music:     0M
                       Other:   769M
-
 
 client/afs_servmon
 ------------------
@@ -282,12 +150,143 @@ but i'm throwing it out for other to see and possibly stimulate
 discussion on how to make this test better. I'd also like to support 
 Linux periodic reports in the future.
 
+server/dropbox_monitor
+----------------------
+Monitors status of Dropbox service by scraping http://status.dropbox.com 
+and examing the string after "Dropbox is ".
+
+    Sun Feb 23 21:41:23 2014 - status: running normally.
+    
+    Dropbox is running normally. green
+
+server/google_monitor
+---------------------
+Monitors Google Apps services using JSON data retrieved from 
+http://www.google.com/appsstatus/json/en. Each service is reported as a 
+separate test.  Example output from the Gmail test:
+
+    Sun Feb 23 20:35:11 2014 - Gmail: OK
+ 
+    Gmail: OK green
+ 
+    green Thu Feb  6 18:00:00 2014 [resolved]
+             The problem with Gmail should be resolved. We apologize for the 
+             inconvenience and thank you for your patience and continued support.
+
+             Additional Info:
+             * New messages should no longer be delayed. Messages stuck in the backlog will continue be delivered over the next few hours.
+
+    yellow Thu Feb  6 14:29:00 2014 [resolved]
+              Gmail service has already been restored for some users, and we 
+              expect a resolution for all users in the near future. Please note 
+              this time frame is an estimate and may change.
+ 
+    yellow Thu Feb  6 14:07:00 2014 [resolved]
+              Our team is continuing to investigate this issue. We will provide 
+              an update by Thu Feb  6 16:00:00 2014 with more information about 
+              this problem. Thank you for your patience.
+
+              Additional Info:
+              * Some users may be experiencing delays in sending and receiving emails.
+
+    yellow Thu Feb  6 13:15:00 2014 [resolved]
+               We're investigating reports of an issue with Gmail. We will 
+               provide more information shortly. 
+
+    Source: http://www.google.com/appsstatus
+
+Google_monitor has not been tested against a full service outage, so the 
+event type is unknown to the author at this time. Unknown event types 
+are flagged as yellow and diagnostic data will be presented on the test 
+page. The author would be grateful for any reports of unknown type codes. 
+
+server/box_monitor
+------------------
+Monitors Box.com cloud services using data retrieved from 
+http://status.box.com. Each service is reported as a separate test.  
+Example output from the sync service test:
+
+    Sun Feb 23 21:31:22 2014 - sync: Up
+    
+    sync: Up green
+    
+    green Thu Feb 20, 2014 10:36PM CST
+       The Sync downloads delay and notifications issue is resolved as of 
+       8:36 p.m. PST. We apologize for any inconvenience.
+
+    red Thu Feb 20, 2014  6:53PM CST
+       Sync downloads and realtime notifications within the web 
+       interface are delayed for some users.
+
+    green Wed Feb 19, 2014  5:59PM CST
+       The issue with Sync and notifications is resolved as of 3:59 p.m. 
+       PST. We apologize for any inconvenience.
+
+    red Wed Feb 19, 2014  3:00PM CST
+       Today starting at 1:00pm PST, Box Sync and realtime notifications 
+       within the web interface are delayed.
+
+    Source: http://status.box.com
+
+The extended log is only available for tests that have experienced 
+issues in the past five days. Please note that while the timestamp at 
+the beginning of each event log entry is converted to the time zone of 
+your choice, any time references in the body of the event are not since 
+the formats of those are more free-form.  I do plan to try and address 
+this in a later release as well as automatically determine the local 
+time zone so it doesn't have to be hard coded at the end of 
+box2localtime().
+
+server/apple_monitor
+--------------------
+Monitors Apple's numerous services using data retrieved from 
+http://www.apple.com/support/systemstatus/. Because Apple's status page 
+requires javascript, this test requires phantiomjs 
+(http://phantomjs.org) and the included 'dumpurl.js' file to renter the 
+javascript and produce HTML this test can consume.  Be sure to modify 
+the following variables in apple_monitor accordingly.
+
+    $::PHANTOMJS    = "/usr/local/bin/phantomjs";
+    $::DUMPURLJS    = "/usr/local/libexec/dumpurl.js";
+
+Apple's status page currently includes three main service categories: 
+Services, Store, and iCloud.  This test treats each category as a 
+separate host, each with their own set of tests, for a total of 35 
+tests.  The hosts.cfg file should contain the following:
+
+    group
+    0.0.0.0         store.apple.com                 # conn NAME:"Apple Stores"
+
+    group
+    0.0.0.0         www.apple.com                   # conn NAME:"Apple Services"
+
+    group
+    0.0.0.0         www.icloud.com                  # conn NAME:"Apple iCloud"
+
+I recommend using real, resolvable host names for each category so the 
+conn test works.  This will keep Xymon from generating a ton of alerts 
+in the event of transient network outages.
+
+Example output from the iCloud host, Calendar service test:
+
+    Sun Feb 23 22:01:42 2014 - Calendar: OK
+
+    Calendar: OK green
+
+    Source: http://www.apple.com/support/systemstatus/
+
+server/dumpurl.js
+-----------------
+Takes one URL as an argument, loads the page, renders any Javascript 
+present, and dumps the result to STDOUT.  Required by server/apple_monitor.
+
 server/wins
 -----------
 This test queries WINS servers and checked for a supplied expected 
 result.
 
 Example output:
+
     Lookup: windc1 => MISMATCH! expected=1.2.3.1, received=1.2.3.5 windc1<00> &red
     Lookup: windc2 => 1.2.3.2 windc2<00> &green
     Lookup: windc3 => 1.2.3.3 windc3<00> &green
