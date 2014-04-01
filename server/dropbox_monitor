@@ -41,15 +41,18 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       vi  (set ts=4 (also in .exrc))
 #
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-# Install in $XYMONCLIENTHOME/client/ext/.
-# Modify $XYMONCLIENTHOME/etc/clientlaunch.cfg and add this block:
+# 1) Install this file in $XYMONHOME/ext/
+#
+# 2) Create $XYMONHOME/etc/tasks.d/dropbox with this block:
+#    -or-
+#    Modify $XYMONHOME/etc/tasks.cfg and add this block:
 #
 #	# Dropbox Monitor
 #	[dropboxmon]
 #		ENABLED
-#		ENVFILE $XYMONCLIENTHOME/etc/xymonclient.cfg
-#		CMD $XYMONCLIENTHOME/ext/dropbox_monitor
-#		LOGFILE $XYMONCLIENTHOME/logs/dropbox_monitor.log
+#		ENVFILE $XYMONHOME/etc/xymonserver.cfg
+#		CMD $XYMONHOME/ext/dropbox_monitor
+#		LOGFILE $XYMONHOME/logs/dropbox_monitor.log
 #		INTERVAL 10m
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #

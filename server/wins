@@ -34,8 +34,11 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 # This test uses Samba's nmblookup command to query WINS servers.
 #
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-# Install this program and all auxilliary files in $XYMONHOME/ext/.
-# Create $XYMONHOME/etc/tasks.d/wins with the following:
+# 1) Install this file in $XYMONHOME/ext/
+#
+# 2) Create $XYMONHOME/etc/tasks.d/wins with this block:
+#    -or-
+#    Modify $XYMONHOME/etc/tasks.cfg and add this block:
 #
 # [wins]
 # 	ENVFILE $XYMONHOME/etc/xymonserver.cfg

@@ -43,15 +43,18 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	vi  (set ts=4 (also in .exrc))
 #
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-# Install in $XYMONCLIENTHOME/client/ext/.
-# Modify $XYMONCLIENTHOME/etc/clientlaunch.cfg and add this block:
+# 1) Install this file in $XYMONHOME/ext/
+#
+# 2) Create $XYMONHOME/etc/tasks.d/box with this block:
+#    -or-
+#    Modify $XYMONHOME/etc/tasks.cfg and add this block:
 #
 # # Box.com Monitor
 # [boxmon]
 #	  ENABLED
-#	  ENVFILE $XYMONCLIENTHOME/etc/xymonclient.cfg
-#	  CMD $XYMONCLIENTHOME/ext/box_monitor
-#	  LOGFILE $XYMONCLIENTHOME/logs/box_monitor.log
+#	  ENVFILE $XYMONHOME/etc/xymonserver.cfg
+#	  CMD $XYMONHOME/ext/box_monitor
+#	  LOGFILE $XYMONHOME/logs/box_monitor.log
 #	  INTERVAL 10m
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #

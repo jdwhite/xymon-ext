@@ -44,15 +44,18 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	  vi  (set ts=4 (also in .exrc))
 #
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-# Install in $XYMONCLIENTHOME/client/ext/.
-# Modify $XYMONCLIENTHOME/etc/clientlaunch.cfg and add this block:
+# 1) Install this file in $XYMONHOME/ext/
+#
+# 2) Create $XYMONHOME/etc/tasks.d/google with this block:
+#    -or-
+#    Modify $XYMONHOME/etc/tasks.cfg and add this block:
 #
 # # Google Monitor
 # [googlemon]
 #	  ENABLED
-#	  ENVFILE $XYMONCLIENTHOME/etc/xymonclient.cfg
-#	  CMD $XYMONCLIENTHOME/ext/google_monitor
-#	  LOGFILE $XYMONCLIENTHOME/logs/google_monitor.log
+#	  ENVFILE $XYMONHOME/etc/xymonserver.cfg
+#	  CMD $XYMONHOME/ext/google_monitor
+#	  LOGFILE $XYMONHOME/logs/google_monitor.log
 #	  INTERVAL 10m
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #

@@ -76,15 +76,18 @@ ZXhpdCgpOwogICAgfSwgNDAwMCk7Cn0pOwo=
 # MD5 (dumpurl.js) = f0484f9995006c7daa60cc3ffdb1403b
 #
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-# Install in $XYMONCLIENTHOME/client/ext/.
-# Modify $XYMONCLIENTHOME/etc/clientlaunch.cfg and add this block:
+# 1) Install this file in $XYMONHOME/ext/
+#
+# 2) Create $XYMONHOME/etc/tasks.d/apple with this block:
+#    -or-
+#    Modify $XYMONHOME/etc/tasks.cfg and add this block:
 #
 # # Apple Monitor
 # [applemon]
 #	  ENABLED
-#	  ENVFILE $XYMONCLIENTHOME/etc/xymonclient.cfg
-#	  CMD $XYMONCLIENTHOME/ext/apple_monitor
-#	  LOGFILE $XYMONCLIENTHOME/logs/apple_monitor.log
+#	  ENVFILE $XYMONHOME/etc/xymonserver.cfg
+#	  CMD $XYMONHOME/ext/apple_monitor
+#	  LOGFILE $XYMONHOME/logs/apple_monitor.log
 #	  INTERVAL 10m
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #
