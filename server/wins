@@ -38,7 +38,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 # Create $XYMONHOME/etc/tasks.d/wins with the following:
 #
 # [wins]
-# 	ENVFILE /usr/pkg/share/xymon/xymonhome/etc/xymonserver.cfg
+# 	ENVFILE $XYMONHOME/etc/xymonserver.cfg
 # 	CMD $XYMONHOME/ext/wins
 # 	LOGFILE $XYMONSERVERLOGS/ext/wins.log
 #	INTERVAL 5m
@@ -48,8 +48,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 $::NMBLOOKUP = '/usr/pkg/bin/nmblookup';
 
 # Xymon Files/Programs
-#$Xymon::XYMONGREP = "$ENV{XYMONHOME}/bin/xymongrep";
-$Xymon::XYMONGREP = "/usr/pkg/share/xymon/xymonhome/bin/xymongrep";
+$Xymon::XYMONGREP = "$ENV{XYMONHOME}/bin/xymongrep";
 
 %Xymon::STATUSCOLOR_PRIORITY = (
 	'red'    => 4,
@@ -139,7 +138,7 @@ wins_check
 		}
 
 		if (/^querying (\S+)/) {
-			s/querying (\S+) on \d+\.\d+\.\d+\.\d+/Lookup: $1 => /;
+			s/querying (\S+) on \d+\.\d+\.\d+\.\d+/Query: $1 => /;
 		}
 
 		$DIAGINFO .= $_;
@@ -148,7 +147,7 @@ wins_check
 			&Xymon::set_testcolor($LINECOLOR);
 		}
 
-		if (! /^Lookup: /io) {
+		if (! /^Query: /io) {
 			$DIAGINFO .= "\n";
 		}
 	}
