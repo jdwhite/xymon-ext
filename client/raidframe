@@ -78,8 +78,12 @@ foreach my $device (@devices) {
 	open(RAIDCTL, "${::SUDO} ${::RAIDCTL} -s $device |") || die "$!";
 	while(<RAIDCTL>) {
 		my($current_condition) = "";
+		# Reconstructing spares sometimes have a null 
+		# character as the raid level.
+		s/\000//o; 
 
-		if (/^\s+\/dev\/.+: (\S+)\s*$/o) {
+		if (/^\s+\/dev\/.+: (\S+)\s*$/o ||
+		    /^\s+component\d+: (\S+)\s*$/o) {
 			my $devstate = $1;
 			if ($devstate eq "optimal" ||
 			    $devstate eq "spare" ||
