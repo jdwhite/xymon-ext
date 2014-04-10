@@ -87,6 +87,7 @@ foreach my $device (@devices) {
 			my $devstate = $1;
 			if ($devstate eq "optimal" ||
 			    $devstate eq "spare" ||
+			    $devstate eq "spared" ||
 			    $devstate eq "used_spare") {
 				$current_condition = "green";
 			}
