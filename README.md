@@ -10,8 +10,7 @@ The items in this repisotiry are licensed under the [MIT license](http://opensou
 
 client/socket_monitor
 ---------------------
-Monitors network socket utilization that, in excess, causes the "Can't 
-assign requested address" error that exists in OS X Mavericks 10.9.1. 
+Monitors network socket utilization that, in excess, causes the "Can't assign requested address" error that exists in OS X Mavericks 10.9.1-10.9.2. 
 More information can be found [here](https://discussions.apple.com/thread/5551686).
 
     Sun Feb 23 21:43:31 2014 - socket: OK
@@ -32,8 +31,7 @@ More information can be found [here](https://discussions.apple.com/thread/555168
 
 client/osx-cacheserver_monitor
 ----------------------------
-Monitors the running state and cache utilization by data type of the OS 
-X Server caching server.
+Monitors the running state and cache utilization by data type of the OS X Server caching server.
 
 Example output:
 
@@ -62,8 +60,7 @@ Example output:
 
 client/afs_servmon
 ------------------
-Monitors an AFS file server through the use of rxdebug and 'bos status' 
-commands.
+Monitors an AFS file server through the use of rxdebug and 'bos status' commands.
 
 Example output:
 
@@ -143,17 +140,11 @@ Example ouptut:
 
 client/dwm_report
 -----------------
-A Daily/Weekly/Monthly report test for NetBSD designed to scan for 
-interesting keywords in these reports and report a status accordingly. 
-This is just a beginning framework. I'm not perfrectly happy with it, 
-but i'm throwing it out for other to see and possibly stimulate 
-discussion on how to make this test better. I'd also like to support 
-Linux periodic reports in the future.
+A Daily/Weekly/Monthly report test for NetBSD designed to scan for interesting keywords in these reports and report a status accordingly. This is just a beginning framework. I'm not perfrectly happy with it, but i'm throwing it out for other to see and possibly stimulate discussion on how to make this test better. I'd also like to support Linux periodic reports in the future.
 
 server/dropbox_monitor
 ----------------------
-Monitors status of Dropbox service by scraping http://status.dropbox.com 
-and examing the string after "Dropbox is ".
+Monitors status of Dropbox service by scraping http://status.dropbox.com and examing the string after "Dropbox is ".
 
     Sun Feb 23 21:41:23 2014 - status: running normally.
     
@@ -161,9 +152,8 @@ and examing the string after "Dropbox is ".
 
 server/google_monitor
 ---------------------
-Monitors Google Apps services using JSON data retrieved from 
-http://www.google.com/appsstatus/json/en. Each service is reported as a 
-separate test.  Example output from the Gmail test:
+Monitors Google Apps services using JSON data retrieved from http://www.google.com/appsstatus/json/en. Each service is reported as a separate test.
+Example output from the Gmail test:
 
     Sun Feb 23 20:35:11 2014 - Gmail: OK
  
@@ -195,15 +185,11 @@ separate test.  Example output from the Gmail test:
 
     Source: http://www.google.com/appsstatus
 
-Google_monitor has not been tested against a full service outage, so the 
-event type is unknown to the author at this time. Unknown event types 
-are flagged as yellow and diagnostic data will be presented on the test 
-page. The author would be grateful for any reports of unknown type codes. 
+Google_monitor has not been tested against a full service outage, so the event type is unknown to the author at this time. Unknown event types are flagged as yellow and diagnostic data will be presented on the test page. The author would be grateful for any reports of unknown type codes. 
 
 server/box_monitor
 ------------------
-Monitors Box.com cloud services using data retrieved from 
-http://status.box.com. Each service is reported as a separate test.  
+Monitors Box.com cloud services using data retrieved from http://status.box.com. Each service is reported as a separate test.
 Example output from the sync service test:
 
     Sun Feb 23 21:31:22 2014 - sync: Up
@@ -228,31 +214,22 @@ Example output from the sync service test:
 
     Source: http://status.box.com
 
-The extended log is only available for tests that have experienced 
-issues in the past five days. Please note that while the timestamp at 
-the beginning of each event log entry is converted to the time zone of 
-your choice, any time references in the body of the event are not since 
-the formats of those are more free-form.  I do plan to try and address 
-this in a later release as well as automatically determine the local 
-time zone so it doesn't have to be hard coded at the end of 
-box2localtime().
+The extended log is only available for tests that have experienced issues in the past five days. Please note that while the timestamp at the beginning of each event log entry is converted to the time zone of your choice, any time references in the body of the event are not since the formats of those are more free-form.  I do plan to try and address this in a later release as well as automatically determine the local time zone so it doesn't have to be hard coded at the end of box2localtime().
 
 server/apple_monitor
 --------------------
-Monitors Apple's numerous services using data retrieved from 
-http://www.apple.com/support/systemstatus/. Because Apple's status page 
-requires javascript, this test requires phantiomjs 
-(http://phantomjs.org) and the included 'dumpurl.js' file to renter the 
-javascript and produce HTML this test can consume.  Be sure to modify 
-the following variables in apple_monitor accordingly.
+Monitors Apple's numerous services using data retrieved from http://www.apple.com/support/systemstatus/. Because Apple's status page requires javascript, this test requires phantiomjs (http://phantomjs.org) and the included 'dumpurl.js' file to renter the javascript and produce HTML this test can consume.  Be sure to modify the following variables in apple_monitor accordingly.
 
     $::PHANTOMJS    = "/usr/local/bin/phantomjs";
     $::DUMPURLJS    = "/usr/local/libexec/dumpurl.js";
 
-Apple's status page currently includes three main service categories: 
-Services, Store, and iCloud.  This test treats each category as a 
-separate host, each with their own set of tests, for a total of 35 
-tests.  The hosts.cfg file should contain the following:
+Apple's status page currently includes 36 tests. Since they are no longer categorized, tests are grouped by the following:
+
+* Store:	anything ending in *store*.
+* iCloud:	contains *iCloud* or "*in the Cloud*"
+* Services:	(*everything else*)
+
+The hosts.cfg file should contain the following:
 
     group
     0.0.0.0         store.apple.com                 # conn NAME:"Apple Stores"
@@ -263,9 +240,7 @@ tests.  The hosts.cfg file should contain the following:
     group
     0.0.0.0         www.icloud.com                  # conn NAME:"Apple iCloud"
 
-I recommend using real, resolvable host names for each category so the 
-conn test works.  This will keep Xymon from generating a ton of alerts 
-in the event of transient network outages.
+I recommend using real, resolvable host names for each category so the conn test works.  This will keep Xymon from generating a ton of alerts in the event of transient network outages.
 
 Example output from the iCloud host, Calendar service test:
 
@@ -277,13 +252,11 @@ Example output from the iCloud host, Calendar service test:
 
 server/dumpurl.js
 -----------------
-Takes one URL as an argument, loads the page, renders any Javascript 
-present, and dumps the result to STDOUT.  Required by server/apple_monitor.
+Takes one URL as an argument, loads the page, renders any Javascript present, and dumps the result to STDOUT.  Required by server/apple_monitor.
 
 server/wins
 -----------
-This test queries WINS servers and checked for a supplied expected 
-result.
+This test queries WINS servers and checked for a supplied expected result.
 
 Example output:
 
