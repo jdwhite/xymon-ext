@@ -209,7 +209,7 @@ while ($page_blob =~ /<table>(.+?)<\/table>/ig) {
 
 		my($MACHINE) = $::SERVICEGROUP2MACHINE{$servgroup};
 
-		print STDERR "machine: $MACHINE, servgroup=$servgroup\n";
+		#print STDERR "machine: $MACHINE, servgroup=$servgroup\n";
 
 
 		# Mangle into Xymon test names.
