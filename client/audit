@@ -538,13 +538,10 @@ sub get_testcolor
 
 sub set_status_summary
 #
-# Set the status summary text.  Will be appended to the following:
-#   <date> - <testname>: 
-# Ex: Wed Mar  5 21:41:56 CST 2014 - audit: <status summary text>
+# Set the status summary text.
 #
 {
-	$Xymon::STATUS_SUMMARY = sprintf("%s - %s: %s\n",
-		scalar(localtime(time)), $main::TESTNAME, shift(@_));
+	$Xymon::STATUS_SUMMARY = shift(@_);
 }
 
 sub get_status_summary
