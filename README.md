@@ -8,6 +8,19 @@ License
 -------
 The items in this repisotiry are licensed under the [MIT license](http://opensource.org/licenses/MIT), except for client/dumpurl.js which has no license.
 
+client/test_framework
+---------------------
+This is a sample test framework for creating other tests.  It's designed as a prelude to writing a Xymon module and contains a couple 
+subroutines designed to take some of the drudgery out of writing Xymon tests.
+
+ * **Xymon::set_testcolor** - tracks the canonical test color. When called the color is only set as the canonical color if it's severity is 
+higher than the current value (obtainable using Xymon::get_tesetcolor).
+
+ * **Xymon::send_status** - sends a status update. Parameters such as lifetime, group, hostname, testname, color, message, and summary can be 
+passed to this subroutine and these criterion will be used to automatically format and send the status message.
+
+There are also other getter/setter subroutines that can be used in leiu of passing certain parameters to **Xymon::send_status**.
+
 client/socket_monitor
 ---------------------
 Monitors network socket utilization that, in excess, causes the "Can't assign requested address" error that exists in OS X Mavericks 10.9.1-10.9.2. 
