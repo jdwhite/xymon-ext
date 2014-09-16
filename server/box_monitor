@@ -359,7 +359,7 @@ box2localtime
 	if ($l_mon eq "Dec" && $box_mon eq "Jan") {
 		$box_year += 1;
 	}
-	if ($box_ampm =~ /^pm/io && $box_hour < 13) {
+	if ($box_ampm =~ /^pm/io && $box_hour < 12) {
 		$box_hour += 12;
 	}
 	if ($box_ampm =~ /^am/io && $box_hour == 12) {
