@@ -71,7 +71,7 @@ use DateTime;
 use LWP::UserAgent;
 use HTML::FormatText::WithLinks;
 #use Data::HexDump;
-#use Data::Dumper;
+use Data::Dumper;
 
 ## Globals ##
 $main::BASEURL  = "http://status.box.com"; # main
@@ -84,24 +84,22 @@ $main::HTML = &http_fetch($main::BASEURL);
 #
 # Trim down HTML for easier parsing and debugging.
 #
-$main::HTML =~ s/^.+<tbody>(.+)<\/tbody>.+$/$1/ism;
+#$main::HTML =~ s/^.+<tbody>(.+)<\/tbody>.+$/$1/ism;
 
 #
 # Box has four current status states and the following has provides a 
 # translation table.
 #
-#  'Up'                 - all good.
-#  'Warning'            - something's amiss.
-#  'Information'        - uses same orange triangle icon as Warning, but
-#                         generally means things are ok. We treat this
-#                         condition differently later on.
-#  'Servce disruption'  - something's totally borked.
+#  'Operational           - all good.
+#  'Degraded Performance' - something's amiss.
+#  'Partial Outage'       - self explanatory.
+#  'Major Outage'         - totally borked.
 #
 %main::BOX2XYMONCOLOR = (
-	'Up'                 => 'green',
-	'Warning'            => 'yellow',
-	'Information'        => 'yellow',
-	'Service Disruption' => 'red'
+	'Operational'          => 'green',
+	'Degraded Performance' => 'yellow',
+	'Partial Outage'       => 'yellow',
+	'Major Outage'         => 'red'
 );
 
 # ## DEBUG ##
@@ -109,153 +107,27 @@ $main::HTML =~ s/^.+<tbody>(.+)<\/tbody>.+$/$1/ism;
 #exit;
 
 #
-# Each service has a row. Parse out each row/service and process.
+# Each service has a <div class="component-container..." block.
 #
-while ($main::HTML =~ /<tr\s+id="([^"]+)".+?>(.+?)<\/tr>/iogsm) {
+while ($main::HTML =~ /<div\s+class=\"component-container\s.+?<span\s+class=\"name\">([^<]+).+?<span class=\"icon-indicator\s.+?data-original-title=\"(.+?)\"><\/span><\/div>/iogsm) {
 	my($TESTNAME) = $1;
-	my($cols) = $2;
+	my($status) = $2;
 	my($COLOR);
 	my($DATA) = "";
 	my($service) = $TESTNAME;
-	my($status);
-	my($StatusFeedHTML) = "";
-	my($StatusFeedTXT) = "";
-	my($StatusFeedPath) = "";
-	my($fetch_StatusFeed) = 0;
 
-	#
-	# Each service has six columns of data: current state and 
-	# previous five days. We scan through each of them to determine 
-	# if any of them had a non-green event, which is a signal to 
-	# fetch the status feed URL later on.
-	#
-	while ($cols =~ /<td class="([^"]+)".*?>(.+?)<\/td>/iogsm) {
-		my($class) = $1;
-		my($celldata) = $2;
+	#print "DEBUG: TESTNAME='$TESTNAME'  status=$status\n";
+	#next;
 
-		# ## DEBUG ##
-		#print "-" x 70,"\n";
-		#print Dumper $celldata;
-		#print "-" x 70,"\n";
-
-		if ($celldata =~ /<img class=.+?alt="([^"]+)/iogsm) {
-			my($cellstatus) = $1;
-
-			# If status for current or previous 5 days 
-			# status is not "Up", flag to fetch status feed 
-			# for previous 5 days.
-			if ($cellstatus ne "Up") {
-				$fetch_StatusFeed = 1;
-				#print "====>fetch_StatusFeed = 1\n";
-			}
-
-			if ($class eq "status highlight") {
-				# Current status, make default status.
-				$status = $cellstatus;
-
-				#print "-----\nDEBUG: celldata=$celldata\n-----\n";
-
-				# See if there's a status feed URL.
-				if ($celldata =~ /loadServiceStatusFeed\([^,]+,\s*'([^']+)/iosm) {
-					$StatusFeedPath = $1;
-					#print "===>StatusFeedPath: $StatusFeedPath\n";
-				}
-			}
-		}
-	}
-
-	my(@StatusFeed) = ();
-
-	if ($fetch_StatusFeed == 1) {
-		#
-		# Fetch extended status feed, parse, add to diagnostic output.
-		#
-		#print "Fetching status feed....\n";
-		my($StatusFeedHTML) =
-			&http_fetch("${main::BASEURL}${StatusFeedPath}");
-
-		while ($StatusFeedHTML =~ /<tr class=[^>]+?>(.*?)<\/tr>/isg) {
-			#print "Reading log entry.....\n";
-			my($entry) = $1;
-			my(%event);
-
-			#print "x" x 70,"\n";
-			#print Dumper $entry;
-			#print "x" x 70,"\n";
-
-			if ($entry =~ /<img .*?alt="([^"]+)/iso) {
-				$event{status} = $1;
-				#print "=>status: $1\n";
-			}
-			if ($entry =~ /<strong>(.+?UTC)<\/strong>/iso) {
-				$event{date} = $1;
-				#print "=>date: $1\n";
-			}
-			if ($entry =~ /<td class="last">.*?<br \/>(.+?)<\/td>/iso) {
-				$event{msg} = $1;
-				#print "=>msg: $1\n";
-
-			}
-
-			push(@StatusFeed, \%event);
-		}
-	}
-
-	#
-	# If status is Informational, check the status of the most 
-	# recent entry in the extended status feed. If the status is 
-	# "green", then this service is green.
-	#
-	if ($status eq "Information" && $StatusFeed[0]->{status} eq "Up") {
-		#print "**** INFORMATIONAL YELLOW; Latest status log ".
-		#	"shows green; promiting status to green\n";
-		$COLOR = "green";
-		$status = "Up (Informational)";
+	if (defined($main::BOX2XYMONCOLOR{$status})) {
+		$COLOR = $main::BOX2XYMONCOLOR{$status};
 	}
 	else {
-		if (defined($main::BOX2XYMONCOLOR{$status})) {
-			$COLOR = $main::BOX2XYMONCOLOR{$status};
-		}
-		else {
-			$status = "UNKNOWN STATUS '${status}'";
-			$COLOR = "red";
-		}
+		$status = "UNKNOWN STATUS '${status}'";
+		$COLOR = "red";
 	}
+
 	$DATA .= "${service}: $status &$COLOR\n\n";
-
-	#
-	# If there's a status feed, format and display.
-	#
-	if (scalar(@StatusFeed) > 0) {
-		$DATA .= "   [Note: listed times are likely Pacific time unless noted.]\n";
-	}
-	foreach my $event (@StatusFeed) {
-		my $f = HTML::FormatText::WithLinks->new(
-			before_link => '',
-			after_link => ' [%l]',
-			footnote => '',
-			leftmargin => 6,
-			rightmargin => 80
-		);
-
-		#
-		# Try and weed out any unicode as it does not display
-		# properly on a Xymon page.
-		#
-		$event->{msg} =~ s/\’/\'/gm; # WORKS!
-		$event->{msg} = $f->parse($event->{msg});
-		#my $msg = Encode::encode("ISO-8859-1", $event->{msg});
-		#$event->{msg} =~ s/0x0D/\'/gm;
-		#$event->{msg} =~ s/\N{U+2019}/\'/gm;
-		#$event->{msg} = Encode::encode("US-ASCII", $event->{msg});
-		#print "=============\n".HexDump($event->{msg})."\n=============\n";
-
-		$DATA .= "&$main::BOX2XYMONCOLOR{$event->{status}} ".
-			&box2localtime($event->{date}).
-			"\n$event->{msg}\n";
-	}
-
-	$DATA .= "\n";
 
 	# Reference.
 	$DATA .= "Source: <A HREF=\"${main::BASEURL}\">${main::BASEURL}</A>\n";
@@ -263,11 +135,12 @@ while ($main::HTML =~ /<tr\s+id="([^"]+)".+?>(.+?)<\/tr>/iogsm) {
 	#
 	# Generate status report.
 	#
-	# STATUS - Canonical status of test and its lifetime: status[+LIFETIME]
-	my($STATUS) = "status ${main::MACHINE}.${TESTNAME} ${COLOR}";
-
 	# SUMMARY - datestamp and summary of the test.
 	my($SUMMARY) = scalar(localtime(time))." - ${TESTNAME}: $status";
+
+	# STATUS - Canonical status of test and its lifetime: status[+LIFETIME]
+	$TESTNAME =~ s/\s/\-/go;
+	my($STATUS) = "status ${main::MACHINE}.${TESTNAME} ${COLOR}";
 
 	# MESSAGE - status, summary, diagnostic data combined.
 	my($MESSAGE) = "${STATUS} ${SUMMARY}\n\n${DATA}";
@@ -323,62 +196,4 @@ http_fetch
 	}
 
 	return($HTML);
-}
-
-sub
-box2localtime
-#
-# Convert from Box's UTC time format to local time.
-# Example: Feb 11 - 4:43PM  UTC
-#
-{
-	my(%month) = (
-		"Jan" => 1, "Feb" => 2, "Mar" => 3, "Apr" => 4, "May" => 5,
-		"Jun" => 6, "Jul" => 7, "Aug" => 8, "Sep" => 9, "Oct" => 10,
-		"Nov" => 11, "Dec" => 12
-	);
-
-	my($boxtime) = shift(@_);
-	my($box_mon, $box_day, $box_hour, $box_min, $box_ampm, $box_tz,
-	   $box_year);
-	my($l_mon,$l_year) = (localtime(time))[4,5];
-
-	if ($boxtime =~ /(\w+)\s+(\d+)\s+\-\s+(\d+):(\d+)(\w+)\s+(\w+)/io) {
-		($box_mon, $box_day, $box_hour, $box_min, $box_ampm, $box_tz) =
-			($1, $2, $3, $4, $5, $6);
-	}
-	else {
-		return($boxtime);
-	}
-
-	#print "box_mon=$box_mon\nbox_day=$box_day\n".
-	#	"box_hour=$box_hour\nbox_min=$box_min\n".
-	#	"box_ampm=$box_ampm\nbox_tz=$box_tz\n";
-
-	$box_year = $l_year + 1900;
-	if ($l_mon eq "Dec" && $box_mon eq "Jan") {
-		$box_year += 1;
-	}
-	if ($box_ampm =~ /^pm/io && $box_hour < 12) {
-		$box_hour += 12;
-	}
-	if ($box_ampm =~ /^am/io && $box_hour == 12) {
-		$box_hour -= 12;
-	}
-
-	my $dt = DateTime->new(
-		year      => $box_year,
-		month     => $month{$box_mon},
-		day       => $box_day,
-		hour      => $box_hour,
-		minute    => $box_min,
-		second    => 0,
-		time_zone => $box_tz
-	);
-
-	#print $dt->hms,"\n";
-	$dt->set_time_zone('America/Chicago');
-	#print $dt->hms,"\n";
-
-	return($dt->strftime("%a %b %e, %Y %l:%M%p %Z"));
 }
