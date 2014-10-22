@@ -109,14 +109,14 @@ $main::HTML = &http_fetch($main::BASEURL);
 #
 # Each service has a <div class="component-container..." block.
 #
-while ($main::HTML =~ /<div\s+class=\"component-container\s.+?<span\s+class=\"name\">([^<]+).+?<span class=\"icon-indicator\s.+?data-original-title=\"(.+?)\"><\/span><\/div>/iogsm) {
+while ($main::HTML =~ /<span\s+class=\"name\">\s*([^<\n]+)\s*.+?<span class=\"component-status\">\s*([^<\n]+)\s*.+?\<\/span>/iogsm) {
 	my($TESTNAME) = $1;
 	my($status) = $2;
 	my($COLOR);
 	my($DATA) = "";
 	my($service) = $TESTNAME;
 
-	#print "DEBUG: TESTNAME='$TESTNAME'  status=$status\n";
+	#print "DEBUG: TESTNAME='$TESTNAME'  status='$status'\n";
 	#next;
 
 	if (defined($main::BOX2XYMONCOLOR{$status})) {
