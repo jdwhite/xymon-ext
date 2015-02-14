@@ -182,10 +182,10 @@ foreach my $entry (@{$main::EVENTLOG->{services}}) {
 	#print "DEBUG: ".$entry->{name}."=".$entry->{id},"\n";
 	#print Dumper $entry,"\n";
 
-	my($TESTNAME) = $entry->{name};	# Xymon column name
-	my($sid) = $entry->{id};	# Google Service ID
-	my($DATA) = "";			# Diagnostic data (service log)
-	my($service) = $entry->{name};  # Full service name.
+	my($TESTNAME) = $entry->{name}; # Xymon column name
+	my($sid)      = $entry->{id};   # Google Service ID
+	my($DATA)     = "";             # Diagnostic data (service log)
+	my($service)  = $entry->{name}; # Full service name.
 	my($COLOR);
 	my($status);
 
@@ -243,10 +243,15 @@ foreach my $entry (@{$main::EVENTLOG->{services}}) {
 
 		# Check for additional data and display;
 		if (defined($event->{additionals})) {
-			$DATA .= "      Additional Info:\n";
+			$DATA .= "      Additional Info\n      ---------------\n";
 			foreach my $note (@{$event->{additionals}}) {
-				# Don't wrap text because it destroys URLs.
-				$DATA .= "      * ".&mangle_text($note)."\n";
+				## Don't wrap text because it destroys URLs.
+				#$DATA .= "      * ".&mangle_text($note)."\n";
+				# Wrapping may destroy URLs, but looks much nicer
+				# then whole paragraph on a single line.
+				$DATA .= sprintf("%s\n",
+				                 wrap("      ", "      ",
+				                      &mangle_text($note)));
 			}
 			$DATA .= "\n";
 		}
