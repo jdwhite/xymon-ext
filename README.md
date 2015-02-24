@@ -157,11 +157,11 @@ A Daily/Weekly/Monthly report test for NetBSD designed to scan for interesting k
 
 server/dropbox_monitor
 ----------------------
-Monitors status of Dropbox service by scraping http://status.dropbox.com and examing the string after "Dropbox is ".
+Monitors status of Dropbox service by scraping http://status.dropbox.com and parsing the values inside the 'status-line' and 'status-message' div tags.
 
     Sun Feb 23 21:41:23 2014 - status: running normally.
     
-    Dropbox is running normally. green
+    Dropbox is running normally.
 
 server/google_monitor
 ---------------------

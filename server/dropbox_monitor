@@ -3,13 +3,31 @@
 # dropbox_monitor - report status of Dropbox service
 #
 # Jason White <jdwhite@menelos.com>
-# 17-Jan-2014 (initial release)
+# Initial version: 17-Jan-2014
 #
-=begin License
-
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+# Install in $XYMONCLIENTHOME/client/ext/.
+# Modify $XYMONCLIENTHOME/etc/clientlaunch.cfg and add this block:
+#
+# # Dropbox Monitor
+# [dropboxmon]
+#         ENABLED
+#         ENVFILE $XYMONCLIENTHOME/etc/xymonclient.cfg
+#         CMD $XYMONCLIENTHOME/ext/dropbox_monitor
+#         LOGFILE $XYMONCLIENTHOME/logs/dropbox_monitor.log
+#         INTERVAL 5m
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#
+# hosts.cfg
+# ---------
+# page Dropbox Dropbox Services
+# title Dropbox Services
+# 0.0.0.0    status.dropbox.com    # conn NAME:"Dropbox"
+#
+=license
 The MIT License (MIT)
 
-Copyright (c) 2014 Jason White <jdwhite@menelos.com>
+Copyright (c) 2015 Jason White <jdwhite@menelos.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -27,70 +45,20 @@ FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
 COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-=end License
 =cut
-
-#
-# Initial indentation of is done with tabs; successive alignment is done 
-# with spaces. To format this code per your indentation preference, say, 
-# 4 spaces per tab stop:
-#       less -x4
-#       nano -T4
-#       vim (set tabstop=4 (also in .vimrc))
-#       vi  (set ts=4 (also in .exrc))
-#
-#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-# 1) Install this file in $XYMONHOME/ext/
-#
-# 2) Create $XYMONHOME/etc/tasks.d/dropbox with this block:
-#    -or-
-#    Modify $XYMONHOME/etc/tasks.cfg and add this block:
-#
-#	# Dropbox Monitor
-#	[dropboxmon]
-#		ENABLED
-#		ENVFILE $XYMONHOME/etc/xymonserver.cfg
-#		CMD $XYMONHOME/ext/dropbox_monitor
-#		LOGFILE $XYMONHOME/logs/dropbox_monitor.log
-#		INTERVAL 10m
-#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-#
-# The MIT License (MIT)
-#
-# Copyright (c) 2014 Jason White <jdwhite@menelos.com>
-#
-# Permission is hereby granted, free of charge, to any person obtaining a
-# copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be included
-# in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-# IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
-# CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-# TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-# SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
 use strict;
 use warnings;
-
+use Text::Wrap;
 use LWP::UserAgent;
 
 ## Globals ##
-$main::TESTNAME  = 'status';
-$main::TESTCOLOR = "clear";	# uncertain by default
-$main::DATA      = "";
-$main::MACHINE   = "status,dropbox,com";	#What we report as.
-$main::URL       = "http://status.dropbox.com";
+$main::TESTNAME	= 'status';
+$main::COLOR	= "clear";	# uncertain by default
+$main::DATA     = "";
+$main::MACHINE	= "status,dropbox,com";	# What we report as.
+$main::URL      = "http://status.dropbox.com";
 
 #
 # Fetch main page and process.
@@ -107,32 +75,67 @@ my($resp) = $ua->request($req);
 $main::HTML = "";
 if ($resp->is_success) {
 	$main::HTML = $resp->content;
-}
-else {
+} else {
 	print "Error reading $main::URL - ".$resp->status_line."\n";
 	exit;
 }
 
-$main::HTML =~ /<h1>(Dropbox is (.+?))<\/h1>/iom;
-$main::DATA .= $1;
-$main::status = $2;
+# DEBUG - slurp test data
+#$main::HTML = do { local $/; <DATA> };
 
-if ($main::status ne "running normally.") {
-	$main::TESTCOLOR = "red";
-}
-else {
-	$main::TESTCOLOR = "green";
+$main::HTML =~ s/(\n|\r)//og;
+
+#
+# Grab status line and message text.
+#
+$::status_line = "";
+if ($main::HTML =~ /<div .*?id="status-line".*?>\s*(.+?)\s*<\/div>/ims) {
+	$::status_line = $1;
+	if ($::status_line =~ /^<[^>]+?>(.*)<\/[^>]+?>/) {
+		$::status_line = $1;
+	}
 }
 
-$main::DATA .= " \&${main::TESTCOLOR}\n";
+$::status_message = "";
+if ($main::HTML =~ /<div .*?id="status-message".*?>\s*(.+?)\s*<\/div>/ims) {
+	$::status_message = $1;
+	if ($::status_message =~ /^<[^>]+?>(.*)<\/[^>]+?>/) {
+		$::status_message = $1;
+	}
+}
+
+#print "status_line='$::status_line'\n";
+#print "status_message='$::status_message'\n";
+#exit;
+
+$main::status = $::status_line;
+if ($main::status !~ /running normally\.$/) {
+	$main::COLOR = "red";
+} else {
+	$main::COLOR = "green";
+}
+
+#
+# If we only have the a status line, don't frame it as a title.
+#
+if ($main::status_message !~ /^\s*$/o) {
+	$main::DATA .= sprintf("===== %s =====\n%s\n",
+	                       $main::status_line,
+	                       wrap("","",$main::status_message)
+	);
+} else {
+	$main::DATA .= "${main::status_line}\n";
+}
+
+$main::DATA .= "\nSource: <A HREF=\"$main::URL\">$main::URL</A>\n";
 
 ##
 ## Generate status report.
 ##
 
 # STATUS - Canonical status of test and its lifetime: status[+LIFETIME]
-#$STATUS = "status+25h ${main::MACHINE}.${main::TESTNAME} ${main::TESTCOLOR}";
-$main::STATUS = "status ${main::MACHINE}.${main::TESTNAME} ${main::TESTCOLOR}";
+#$STATUS = "status+25h ${main::MACHINE}.${main::TESTNAME} ${main::COLOR}";
+$main::STATUS = "status ${main::MACHINE}.${main::TESTNAME} ${main::COLOR}";
 
 # SUMMARY - datestamp and summary of the test.
 $main::SUMMARY = scalar(localtime(time))." - ${main::TESTNAME}: $main::status";
@@ -153,8 +156,7 @@ if (defined($ENV{XYMON})) {
 		exit;
 	};
 	select(XYMON);
-}
-else {
+} else {
 	print STDERR "*** Not invoked by Xymon; sending to stdout ***\n\n";
 }
 
@@ -162,3 +164,12 @@ print $main::MESSAGE;
 close(XYMON);
 
 exit;
+
+__DATA__
+<div id="status"></div>
+<div id="status-line">
+   <h1>Dropbox is experiencing issues.</h1>
+</div>
+<div id="status-message">
+   <h2>We are aware of an issue currently affecting the Dropbox site. We have identified the cause, which was the result of an issue that arose during routine internal maintenance, and are working to fix this as soon as possible. We apologize for any inconvenience.</h2>
+</div>
