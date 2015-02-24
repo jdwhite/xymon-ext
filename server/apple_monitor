@@ -5,74 +5,6 @@
 # Jason White <jdwhite@menelos.com>
 # 8-Feb-2014
 #
-# Requires phantomjs (http://phantomjs.org) to render javascript and
-# produce HTML.  Also be sure to save the following as 'dumpurl.js':
-#
-#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-# Created with 'uuencode -m ...'. Decode with uudecode.
-#
-=dumpurl.js.uue
-begin-base64 644 dumpurl.js
-Ly8KLy8gZHVtcHVybC5qcyAtIGZldGNoLCByZW5kZXIsIGFuZCBkdW1wIEhUTUwgdG8gc3Rkb3V0
-Ci8vCi8vIEphc29uIFdoaXRlCi8vIDExLUZlYi0yMDE0Ci8vCnZhciBwYWdlID0gbmV3IFdlYlBh
-Z2UoKSwgYWRkcmVzczsKCmlmIChwaGFudG9tLmFyZ3MubGVuZ3RoID09PSAwKSB7CiAgICBjb25z
-b2xlLmxvZygnVXNhZ2U6IGR1bXB1cmwuanMge1VSTH0nKTsKICAgIHBoYW50b20uZXhpdCgpOwp9
-CgovLyBodHRwOi8vc3RhY2tvdmVyZmxvdy5jb20vcXVlc3Rpb25zLzE2ODU0Nzg4L3BoYW50b21q
-cy13ZWJwYWdlLXRpbWVvdXQKcGFnZS5zZXR0aW5ncy5yZXNvdXJjZVRpbWVvdXQgPSAxMDAwMDsg
-Ly8gMTAgc2Vjb25kcwpwYWdlLm9uUmVzb3VyY2VUaW1lb3V0ID0gZnVuY3Rpb24oZSkgewogIGNv
-bnNvbGUubG9nKGUuZXJyb3JDb2RlKTsgICAvLyBpdCdsbCBwcm9iYWJseSBiZSA0MDgKICBjb25z
-b2xlLmxvZyhlLmVycm9yU3RyaW5nKTsgLy8gaXQnbGwgcHJvYmFibHkgYmUgJ05ldHdvcmsgdGlt
-ZW91dCBvbiByZXNvdXJjZScKICBjb25zb2xlLmxvZyhlLnVybCk7ICAgICAgICAgLy8gdGhlIHVy
-bCB3aG9zZSByZXF1ZXN0IHRpbWVkIG91dAogIHBoYW50b20uZXhpdCgxKTsKfTsKCmFkZHJlc3Mg
-PSBlbmNvZGVVUkkocGhhbnRvbS5hcmdzWzBdKTsKcGFnZS5vcGVuKGFkZHJlc3MsIGZ1bmN0aW9u
-IChzdGF0dXMpIHsKICAgIC8vY29uc29sZS5sb2coImluc2lkZSBwYWdlLm9wZW4oKSIpOwogICAg
-aWYgKHN0YXR1cyAhPT0gJ3N1Y2Nlc3MnKSB7CiAgICAgICAgY29uc29sZS5sb2coJ0ZhaWxlZCB0
-byBsb2FkJywgYWRkcmVzcyk7CglwaGFudG9tLmV4aXQoKTsKICAgIH0KICAgIHdpbmRvdy5zZXRU
-aW1lb3V0KGZ1bmN0aW9uKCkgewoJY29uc29sZS5sb2cocGFnZS5jb250ZW50KTsKCXBoYW50b20u
-ZXhpdCgpOwogICAgfSwgNDAwMCk7Cn0pOwo=
-====
-=cut
-
-#
-# MD5 (dumpurl.js) = f0484f9995006c7daa60cc3ffdb1403b
-#
-=dumpurl.js
-//
-// dumpurl.js - fetch, render, and dump HTML to stdout
-//
-// Jason White
-// 11-Feb-2014
-//
-var page = new WebPage(), address;
-
-if (phantom.args.length === 0) {
-    console.log('Usage: dumpurl.js {URL}');
-    phantom.exit();
-}
-
-// http://stackoverflow.com/questions/16854788/phantomjs-webpage-timeout
-page.settings.resourceTimeout = 10000; // 10 seconds
-page.onResourceTimeout = function(e) {
-  console.log(e.errorCode);   // it'll probably be 408
-  console.log(e.errorString); // it'll probably be 'Network timeout on resource'
-  console.log(e.url);         // the url whose request timed out
-  phantom.exit(1);
-};
-
-address = encodeURI(phantom.args[0]);
-page.open(address, function (status) {
-    //console.log("inside page.open()");
-    if (status !== 'success') {
-        console.log('Failed to load', address);
-	phantom.exit();
-    }
-    window.setTimeout(function() {
-	console.log(page.content);
-	phantom.exit();
-    }, 4000);
-});
-=cut
-
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # Install in $XYMONCLIENTHOME/client/ext/.
 # Modify $XYMONCLIENTHOME/etc/clientlaunch.cfg and add this block:
@@ -86,30 +18,24 @@ page.open(address, function (status) {
 #           INTERVAL 10m
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #
-# The apple status page currently contains 36 Services. Since displaying
-# all 36 columns in a single host woule be visually disturbing, they
-# have been divided into Store, iCloud, and (as a default) Services, with
-# each group being assigned a host name.
+# The apple status page currently contains 45 Services. Since displaying
+# all 45 columns in a single host woule be visually disturbing, I recommend
+# placing this host on a separate 'vpage' so that the the tests are
+# displayed vertically.
 #
-# I recommend using real, resolvable host names for each category so the 
-# conn test works.  This will keep Xymon from generating a ton of alerts 
-# in the event of transient network outages.
+# I recommend using real, resolvable host name so that conn test works. This
+# will keep Xymon from generating a ton of alerts in the event of transient
+# network outages.
 #
 # hosts.cfg
 # ---------
-# group
-# 0.0.0.0         store.apple.com                 # conn NAME:"Apple Stores"
-#
-# group
+# vpage apple Apple Services
 # 0.0.0.0         www.apple.com                   # conn NAME:"Apple Services"
-#
-# group
-# 0.0.0.0         www.icloud.com                  # conn NAME:"Apple iCloud"
 #
 =license
 The MIT License (MIT)
 
-Copyright (c) 2014 Jason White <jdwhite@menelos.com>
+Copyright (c) 2015 Jason White <jdwhite@menelos.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -133,146 +59,456 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 use strict;
 use warnings;
 use Data::Dumper;
+use LWP::UserAgent;
+use Text::Wrap;
+use JSON;
+use English;
+
+#
+# == Initialize Xymon Namespace ==
+# Call this to initialize the Xymon:: functions and variables.
+&Xymon::init_xymon_namespace;
 
 ## Globals ##
-$::PHANTOMJS	= "/usr/local/bin/phantomjs";
-$::DUMPURLJS	= "/Users/admin/libexec/dumpurl.js";
-$::URL		= "http://www.apple.com/support/systemstatus/";
+# main::URL is for the reference on the status page.
+$main::URL      = "http://www.apple.com/support/systemstatus/";
+# Note: substitute the "en_US" suffix in URL_JSON to reflect your own locale.
+$main::URL_JSON = "http://www.apple.com/support/systemstatus/data/system_status_en_US.js";
 
-# ::MACHINE/DOTS - host this test is reporting for as defined in hosts.cfg.
-#$::MACHINE	= $ENV{MACHINE};
-#$::MACHINE	= "apple";
+#
+# Fetch JSON service log.
+#
+my($ua) = LWP::UserAgent->new;
+my($req) = HTTP::Request->new(
+	GET => $main::URL_JSON
+);
 
-%::SERVICEGROUP2MACHINE = (
-	'iCloud'	=> "www,icloud,com",
-	'Stores'	=> "store,apple,com",
-	'Services'	=> "www,apple,com"
+# Pass request to the user agent and get a response.
+my($resp) = $ua->request($req);
+
+# Check the outcome of the response.
+$main::json_service_log = "";
+if ($resp->is_success) {
+	$main::json_service_log = $resp->content;
+}
+else
+{
+	print "Error reading service statuslog - ".$resp->status_line."\n";
+	exit;
+}
+
+#$main::json_service_log = `cat /Users/mcp/system_status_en_US.js.issue.json`;
+
+# Decode JSON into a hash, converting any UTF-8 characters in the process.
+$main::EVENTLOG = decode_json $main::json_service_log;
+#print Dumper $main::EVENTLOG; exit;
+
+#
+# ::EVENTLOG is a hash that contains two keys used by this test:
+#
+# dashboard->services - a hash arrays with the key being the service name and the 
+#                       value being an array of hashes containing metadata regarding
+#                       the current status.
+#
+# detailedTimeline - an array of hashes containing previous events for the last N days.
+#                    (I believe N is 3, but not confirmed.)
+#
+
+#
+# Generate detailed timeline log.
+#
+# This limited historical data is part of the JSON payload, but it doesn't
+# tie to any particular test. Its contents could be reported as a 'timeline'
+# test.
+#
+$main::TIMELINE = "Detailed Timeline of Events\n".
+                  "===========================\n";
+foreach my $event (@{$main::EVENTLOG->{detailedTimeline}}) {
+	#print Dumper $event,"\n"; next;
+	$event->{message} =~ s/^\s*//;
+	my($entry) = sprintf("===== %s - %s =====\n".
+	                     "  Type: %s\n".
+	                     "Posted: %s\n".
+	                     "  Date: %s - %s\n".
+	                     " Issue: %s\n\n",
+	                 $event->{messageTitle}, $event->{usersAffected},
+	                 $event->{statusType},
+	                 $event->{datePosted},
+	                 $event->{startDate}, $event->{endDate},
+	                 wrap("", "        ", $event->{message})
+	);
+
+	$main::TIMELINE .= $entry;
+}
+$main::TIMELINE .= "\nSource: <A HREF=\"${main::URL}\">${main::URL}</a>\n";
+
+#print $main::TIMELINE,"\n"; exit
+
+#
+# Send Timeline status update.
+#
+my($TESTNAME) = "Timeline";
+my($status) = "OK";
+my($COLOR) = "green";
+
+# Reset vars to defaults.
+&Xymon::init_xymon_namespace;
+
+# Host this test is reporting for as defined in hosts.cfg.
+&Xymon::set_machinename("www,apple,com");
+
+&Xymon::set_summary($status);
+&Xymon::set_testname($TESTNAME);
+
+&Xymon::send_status(
+	"message"  => $main::TIMELINE
 );
 
 #
-# Use phamtomjs to grab, render, and dump html to stdout.
+# Process each service; send status update.
 #
-my($page_blob);
-open(HTML, "$::PHANTOMJS --debug=no $::DUMPURLJS $::URL |") || die "$!";
-while(<HTML>) {
-	chomp;
-	$page_blob .= $_;
-}
-close(HTML);
+foreach my $service (keys %{$main::EVENTLOG->{dashboard}->{Services}}) {
+	my($TESTNAME) = $service;
+	my($status) = "OK";
+	my($COLOR) = "clear";
+	my($message) = "";
+	my($eventlog) = "";
 
-# Trim the fat so there's less to parse.
-$page_blob =~ s/^.+(<div\s+role=\"main\"\s+id=\"dashboard\".+?<\/div>).+$/$1/i;
+	# Reset vars to defaults.
+	&Xymon::init_xymon_namespace;
 
-#print Dumper $page_blob; exit;
+	# Host this test is reporting for as defined in hosts.cfg.
+	&Xymon::set_machinename("www,apple,com");
 
-#
-# Process each service category (currently "Services", "Store", and "iCloud")
-#
-while ($page_blob =~ /<table>(.+?)<\/table>/ig) {
-	my($table) = $1;
-	$table =~ s/\&amp;/\&/goi;
-
-	#
-	# Process each service within a category.
-	#
-	while ($table =~ /<td.*?<span\s+class=\"([^\"]+)\".+?class=\"matrix_p"\s+alt=\"([^\"]+)\".*?<p class=\"affected_p\">(.*?)<\/p><\/td>/ig) {
-		my($status) = $1;
-		my($TESTNAME) = $2;
-		my($affected) = $3;
-		my($COLOR) = "clear";
-		#my($DATA) = "=" x length($servgroup)."\n${servgroup}\n"."=" x length($servgroup)."\n\n";
-		my($DATA) = "";
-		my($service) = $TESTNAME;
-		my($servgroup) = "";
-
-		# Determine service group: iCloud, Services, or Stores
-		# and mangle test names.
-		if ($service =~ /Store$/io) {
-			$servgroup = "Stores";
-			$TESTNAME =~ s/Store$//;
-		}
-		elsif ($service =~ /^iCloud /io ||
-		       $service =~ /in the Cloud/io) {
-			$servgroup = "iCloud";
-			$TESTNAME =~ s/^iCloud\s+//io;
-			$TESTNAME =~ s/in the Cloud//i;
-			$TESTNAME =~ s/^Account \& Sign In/Account,SignIn/io;
-			$TESTNAME =~ s/^Web Apps \(iCloud\.com\)/iCloudDotCom/io;
-			$TESTNAME =~ s/^Bookmarks \& Tabs.*/Bookmarks,Tabs/io;
-		}
-		else {
-			$servgroup = "Services";
-			$TESTNAME =~ s/for iCloud\s+//io;
-			$TESTNAME =~ s/iOS Device Activation/iOS Dev Act/;
-			$TESTNAME =~ s/^Find My iPhone.+$/Find My Devices/io;
-		}
-
-		my($MACHINE) = $::SERVICEGROUP2MACHINE{$servgroup};
-
-		#print STDERR "machine: $MACHINE, servgroup=$servgroup\n";
-
-
-		# Mangle into Xymon test names.
-		if ($servgroup eq "Services") {
-		} elsif ($servgroup eq "Stores") {
-		} elsif ($servgroup eq "iCloud") {
-		}
-
-		# Zorch whitespace and convert status to something more terse.
-		$TESTNAME =~ s/\s+//g;
-		$status =~ s/allgood/OK/io;
-
-		my($line_color) = "";
-		if ($status eq "OK") {
-			$COLOR = "green";
-		} else {
-			$COLOR = "yellow";
-		}
-
-		$DATA .= sprintf("%s: %s &%s\n\n", $service, $status, $COLOR);
-
-		if ($affected !~ /^\s*$/o) {
-			$DATA .= "${affected}\n\n";
-		}
-
-		$DATA .= "Source: <A HREF=\"${main::URL}\">${main::URL}</a>\n";
-
-		##
-		## Generate status report
-		##
-
-		# STATUS - Canonical status of test and its lifetime:
-		#		 status[+LIFETIME]
-		#$STATUS = "status+25h ${::MACHINE}.${::TESTNAME} ${::COLOR}";
-		my $STATUS = "status ${MACHINE}.${TESTNAME} ${COLOR}";
-
-		# SUMMARY - datestamp and summary of the test.
-		my $SUMMARY = scalar(localtime(time))." - ${service}: $status";
-
-		my $MESSAGE = "${STATUS} ${SUMMARY}\n\n${DATA}";
-
+	# Munge test names to deal with problematic characters.
+	$TESTNAME =~ s/[\(\)]//go;
+	$TESTNAME =~ s/\s/_/go;
+	$TESTNAME =~ s/\./,/go;
+	
+	if (scalar(@{$main::EVENTLOG->{dashboard}->{Services}->{$service}}) != 0) {
 		#
-		# Send to Xymon or to stdout if run interactively.
+		# Process service events
 		#
-		if (defined($ENV{XYMON})) {
-		        # "at" sign as argument means "read message data 
-		        # from stdin". DON'T USE A DASH AS THE xymon 
-		        # USAGE MESSAGE SHOWS ELSE ONLY THE SUMMARY 
-		        # INFORMATION IS DISPLAYED AND NONE OF $DATA. 
-		        # THE MANPAGE USAGE OF "@" IS CORRECT.
+		foreach my $item (@{$main::EVENTLOG->{dashboard}->{Services}->{$service}}) {
+			$status = $item->{statusType};
+			$status =~ s/([a-z]+)([A-Z])/$1 $2/g;
+			#foreach my $key (keys %{$item}) {
+			#	print "\t'$key'='$item->{$key}'\n";
+			#}
 
-		        open(XYMON, "| $ENV{XYMON} $ENV{XYMSRV} @") || do {
-		                print "Error invoking $ENV{XYMON} $ENV{XYMSRV} @ - $!";
-		                exit;
-		        };
-		        select(XYMON);
-		} else {
-		        print STDERR "*** Not invoked by Xymon; spewing to stdout ***\n\n";
+			if ($status eq "Maintenance" ||
+			    $status eq "ServiceIssue")
+			{
+				&Xymon::set_testcolor("yellow");
+			}
+			elsif ($status eq "ServiceOutage")
+			{
+				&Xymon::set_testcolor("red");
+			}
+			else
+			{
+				&Xymon::set_testcolor("yellow");
+			}
+
+			$eventlog = sprintf("%s - %s\n%s\n%s\n",
+			                    $item->{datePosted},
+			                    $item->{messageTitle},
+			                    $item->{shortMessage},
+			                    $item->{usersAffected}
+			);
 		}
-
-		print $MESSAGE;
-		close(XYMON);
 	}
+	else
+	{
+		#
+		# No event data for this service.
+		#
+		&Xymon::set_testcolor("green");
+	}
+
+	&Xymon::set_summary($status);
+	&Xymon::set_testname($TESTNAME);
+
+	$message .= sprintf("%s: %s &%s\n\n", $service, $status, &Xymon::get_testcolor());
+	if ($eventlog ne "") {
+		$message .= "${eventlog}\n";
+	}
+
+	#
+	# Check detailed timeline message titles for entries matching current
+	# service title and append timeline entry to service information page.
+	#
+	foreach my $event (@{$main::EVENTLOG->{detailedTimeline}}) {
+		#print Dumper $event,"\n"; next;
+
+		#print "DEBUG: Comparing service='${service}' with event '$event->{messageTitle}'\n";
+
+		if ($event->{messageTitle} =~ /^${service}/i) {
+			$event->{message} =~ s/^\s*//;
+
+			my($entry) = sprintf("===== %s - %s =====\n".
+			                     "  Type: %s\n".
+			                     "Posted: %s\n".
+			                     "  Date: %s - %s\n".
+			                     " Issue: %s\n\n",
+		        	         $event->{messageTitle}, $event->{usersAffected},
+			                 $event->{statusType},
+			                 $event->{datePosted},
+			                 $event->{startDate}, $event->{endDate},
+			                 wrap("", "        ", $event->{message})
+			);
+			$message .= $entry;
+		}
+	}
+
+	$message .= "Source: <A HREF=\"${main::URL}\">${main::URL}</a>\n";
+
+	#
+	# == Report findings ==
+	#
+	# Note send_status() takes a hash of arguments; it's like varargs for perl. :)
+	# Arguments are:
+	#
+	#   "lifetime" - lifetime of the report.
+	#   "group"    - reporing group
+	#   "hostname" - name of machine we report as
+	#   "testname" - name of test
+	#   "color"    - canonical test color to report
+	#   "message"  - the body of the rest report (diagnostic information)
+	#   "summary"  - brief text shown on first line after date and test name
+	#
+
+	&Xymon::send_status(
+		"message"  => $message,
+	);
 }
 
 exit;
+
+#============================================================================
+#
+# Xymon package starts here
+#
+#============================================================================
+package Xymon;
+
+sub init_xymon_namespace
+#
+# Initialize variables in the Xymon namespace
+#
+{
+	%Xymon::COLOR_PRIORITY = (
+		'red'    => 4,
+		'yellow' => 3,
+		'green'  => 2,
+		'clear'  => 1
+	);
+
+	$Xymon::TESTNAME        = "default-test";
+	$Xymon::MACHINE         = $ENV{MACHINE};
+	$Xymon::SUMMARY         = "";
+	$Xymon::COLOR           = "clear";
+
+	1;
+}
+
+sub send_status
+#
+# Send a status update to the Xymon display server.
+#
+# usage: send_status(%validargs)
+#	
+{
+	#
+	# Valid arguments (named same as xymon(1) manpage).
+	#
+	my %validargs = (
+		"lifetime"  => 1,
+		"group"     => 1,
+		"hostname"  => 1,
+		"testname"  => 1,
+		"color"     => 1,
+		"message"   => 1,
+		"summary"   => 1,
+	);
+
+	my %args = @_;
+
+	#
+	# Validate passed arguments; warn if invalid.
+	#
+	foreach my $key (keys %args) {
+		if (! defined($validargs{$key})) {
+			print STDERR "${main::PROGRAM_NAME}: in send_staus(): ".
+			             "invalid argument $key\n";
+		}
+	}
+
+	my($LIFETIME)  = exists $args{lifetime}
+	                 ? "+$args{lifetime}" : "";
+	my($GROUP)     = exists $args{group}
+	                 ? "/group:$args{group}" : "";
+	my($TESTNAME)  = exists $args{testname}
+	                 ? $args{testname}
+	                 : &Xymon::get_testname;
+	my($COLOR)     = exists $args{color}
+	                 ? $args{color}
+	                 : &Xymon::get_testcolor;
+	my($MACHINE)   = exists $args{hostname}
+	                 ? $args{hostname}
+	                 : &Xymon::get_machinename;
+	my($DIAGINFO)  = exists $args{message}
+	                 ? $args{message}
+	                 : "";
+	my($SUMMARY)   = exists $args{summary}
+	                 ? $args{summary}
+	                 : &Xymon::get_summary;
+
+	my($MESSAGE)   = sprintf("status%s%s %s.%s %s %s - %s: %s\n%s",
+		$LIFETIME, $GROUP, $MACHINE, $TESTNAME, $COLOR,
+		scalar(localtime(time)), $TESTNAME, $SUMMARY, $DIAGINFO);
+
+	#
+	# Send to Xymon or to stdout if run interactively.
+	#
+	if (defined($ENV{XYMON})) {
+		# "at" sign as argument means "read message data from 
+		# stdin". DON'T USE A DASH AS THE xymon USAGE MESSAGE 
+		# SHOWS ELSE ONLY THE SUMMARY INFORMATION IS DISPLAYED 
+		# AND NONE OF ${DATA}. THE MANPAGE USAGE OF "@" IS 
+		# CORRECT.
+
+		my($cmd) = "$ENV{XYMON} $ENV{XYMSRV} @";
+		open(XYMON, "| ${cmd}") || do {
+			print "Error invoking ${cmd} - $!";
+			exit;
+		};
+		select(XYMON);
+	}
+	else
+	{
+		print STDERR "*** Not invoked by Xymon; ".
+		             "sending to stdout ***\n\n";
+	}
+
+	print $MESSAGE;
+	close(XYMON);
+}
+
+sub set_testcolor
+#
+# Set the canonical test color. Returns the canonical test color.
+#
+{
+	my($new_testcolor) = shift(@_);
+
+	if (! defined($Xymon::COLOR_PRIORITY{$new_testcolor})) {
+		return &Xymon::get_testcolor;
+	}	
+	
+	if ($Xymon::COLOR_PRIORITY{$Xymon::COLOR} <
+	    $Xymon::COLOR_PRIORITY{$new_testcolor}) {
+		$Xymon::COLOR = $new_testcolor;
+	}
+
+	return &Xymon::get_testcolor;
+}
+
+sub get_testcolor
+#
+# Returns the canonical test color.
+#
+{
+	return $Xymon::COLOR;
+}	    
+
+sub set_summary
+#
+# Set the status summary text.
+#
+{
+	$Xymon::SUMMARY = shift(@_);
+}
+
+sub get_summary
+#
+# Returns the status summary color.
+#
+{
+	my($SUMMARY) = $Xymon::SUMMARY;
+
+	if ($SUMMARY =~ /^\s*$/o) {
+		if ($Xymon::COLOR_PRIORITY{$Xymon::COLOR} >
+		    $Xymon::COLOR_PRIORITY{"green"}) {
+			$SUMMARY = "NOT OK";
+		}
+		else
+		{
+			$SUMMARY = "OK";
+		}
+	}
+
+	return $SUMMARY;
+}
+
+sub set_testname
+#
+# Set the test name.
+#
+{
+	$Xymon::TESTNAME = shift(@_);
+}
+
+sub get_testname
+#
+# Returns the test name.
+#
+{
+	return $Xymon::TESTNAME;
+}
+
+sub set_machinename
+#
+# Set the test name.
+#
+{
+	$Xymon::MACHINE = shift(@_);
+}
+
+sub get_machinename
+#
+# Returns the test name.
+#
+{
+	my($MACHINE) = $Xymon::MACHINE;
+	if ($MACHINE =~ /^\s*$/) { $MACHINE = "dummy,example,com"; }
+
+	return $MACHINE;
+}
+
+#===========================================================================
+
+__DATA__
+{"redirectUrl":null,"dashboard":{"Services":{"App Store":[],"Apple ID":[],"Apple Online Store":[],"Apple Pay":[],"Apple TV":[],"Back to My Mac":[],"Beats Music":[],"Dictation":[],"Documents in the Cloud":[],"FaceTime":[],"Find My Friends":[],"Find My iPhone, iPad, iPod touch, and Mac":[],"Game Center":[],"iBooks Store":[],"iChat":[],"iCloud Account & Sign In":[],"iCloud Backup":[],"iCloud Bookmarks & Tabs":[],"iCloud Calendar":[],"iCloud Contacts":[],"iCloud Drive":[],"iCloud Keychain":[],"iCloud Mail":[],"iCloud Notes":[],"iCloud Reminders":[],"iCloud Storage Upgrades":[],"iCloud Web Apps (iCloud.com)":[],"iMessage":[],"iMovie Theater":[],"iOS Device Activation":[],"iPhone Calls to iPad and Mac":[],"iTunes in the Cloud":[],"iTunes Match":[],"iTunes Radio":[],"iTunes Store":[],"iTunes U":[],"iWork for iCloud beta":[],"Mac App Store":[],"Mail Drop":[],"Maps":[],"Photo Print Products":[],"Photos":[],"Siri":[],"SMS Text Forwarding":[],"Spotlight suggestions":[]}},"detailedTimeline":[{"message":" Users were unable to access iCloud Mail or iCloud Notes. ","usersAffectedPercent":0.023,"usersAffected":"0.023% of users were affected","messageId":"1006","statusType":"ServiceOutage","messageTitle":"Multiple iCloud Services","datePosted":"02/10/2015 09:31 PST","messageBodyDates":{"_expectedResolution_":null,"_nextUpdate_":null},"messageUUID":"1017-10085-2086","epochStartDate":1423345500000,"epochEndDate":1423348080000,"startDate":"02/07/2015 13:45 PST","endDate":"02/07/2015 14:28 PST"}]}
+
+         'detailedTimeline' => [
+                                  {
+                                    'message' => ' Users were unable to access iCloud Mail or iCloud Notes. ',
+                                    'endDate' => '02/07/2015 14:28 PST',
+                                    'messageUUID' => '1017-10085-2086',
+                                    'usersAffectedPercent' => '0.023',
+                                    'epochEndDate' => '1423348080000',
+                                    'epochStartDate' => '1423345500000',
+                                    'usersAffected' => '0.023% of users were affected',
+                                    'messageId' => '1006',
+                                    'messageTitle' => 'Multiple iCloud Services',
+                                    'startDate' => '02/07/2015 13:45 PST',
+                                    'datePosted' => '02/10/2015 09:31 PST',
+                                    'messageBodyDates' => {
+                                                            '_nextUpdate_' => undef,
+                                                            '_expectedResolution_' => undef
+                                                          },
+                                    'statusType' => 'ServiceOutage'
+                                  }
+                                ]
+        };

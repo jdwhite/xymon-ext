@@ -231,27 +231,15 @@ The extended log is only available for tests that have experienced issues in the
 
 server/apple_monitor
 --------------------
-Monitors Apple's numerous services using data retrieved from http://www.apple.com/support/systemstatus/. Because Apple's status page requires javascript, this test requires phantiomjs (http://phantomjs.org) and the included 'dumpurl.js' file to renter the javascript and produce HTML this test can consume.  Be sure to modify the following variables in apple_monitor accordingly.
+Monitors Apple's numerous services using data retrieved from http://www.apple.com/support/systemstatus/.
 
-    $::PHANTOMJS    = "/usr/local/bin/phantomjs";
-    $::DUMPURLJS    = "/usr/local/libexec/dumpurl.js";
-
-Apple's status page currently includes 36 tests. Since they are no longer categorized, tests are grouped by the following:
-
-* Store:	anything ending in *store*.
-* iCloud:	contains *iCloud* or "*in the Cloud*"
-* Services:	(*everything else*)
+Apple's status page currently includes 45 tests. Since they are no longer categorized, I recommend configuring a separate 'vpage' to 
+display the tests as hosts (one per line) instead of columns.
 
 The hosts.cfg file should contain the following:
 
-    group
-    0.0.0.0         store.apple.com                 # conn NAME:"Apple Stores"
-
-    group
+    vpage apple Apple Services
     0.0.0.0         www.apple.com                   # conn NAME:"Apple Services"
-
-    group
-    0.0.0.0         www.icloud.com                  # conn NAME:"Apple iCloud"
 
 I recommend using real, resolvable host names for each category so the conn test works.  This will keep Xymon from generating a ton of alerts in the event of transient network outages.
 
@@ -263,9 +251,8 @@ Example output from the iCloud host, Calendar service test:
 
     Source: http://www.apple.com/support/systemstatus/
 
-server/dumpurl.js
------------------
-Takes one URL as an argument, loads the page, renders any Javascript present, and dumps the result to STDOUT.  Required by server/apple_monitor.
+In addition to the service tests, an additional 'Timeline' test is reported containing the detailed timeline data at the bottom of the 
+status page. Detailed status data is also included on a per-test basis when appropriate.
 
 server/wins
 -----------
