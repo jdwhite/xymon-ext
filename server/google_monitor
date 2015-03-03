@@ -9,7 +9,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2014 Jason White <jdwhite@menelos.com>
+Copyright (c) 2015 Jason White <jdwhite@menelos.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -236,21 +236,21 @@ foreach my $entry (@{$main::EVENTLOG->{services}}) {
 			$main::MESSAGE_TYPE_COLOR{$event->{type}},
 			scalar(localtime(int($event->{time}/1000))),
 			($event->{resolved} == 1) ? " [resolved]" : "",
-			wrap("      ", "      ",
+			wrap("   ", "   ",
 				&mangle_text($event->{message})
 			)
 		);
 
 		# Check for additional data and display;
 		if (defined($event->{additionals})) {
-			$DATA .= "      Additional Info\n      ---------------\n";
+			$DATA .= "   Additional Info\n   ---------------\n";
 			foreach my $note (@{$event->{additionals}}) {
 				## Don't wrap text because it destroys URLs.
 				#$DATA .= "      * ".&mangle_text($note)."\n";
 				# Wrapping may destroy URLs, but looks much nicer
 				# then whole paragraph on a single line.
 				$DATA .= sprintf("%s\n",
-				                 wrap("      ", "      ",
+				                 wrap("   ", "   ",
 				                      &mangle_text($note)));
 			}
 			$DATA .= "\n";
