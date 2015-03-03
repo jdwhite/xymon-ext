@@ -255,11 +255,10 @@ status page. Detailed status data is also included on a per-test basis when appr
 
 server/wins
 -----------
-This test queries WINS servers and checked for a supplied expected result.
+This test queries WINS servers and checks for a supplied expected result.
 
 Example output:
 
     Lookup: windc1 => MISMATCH! expected=1.2.3.1, received=1.2.3.5 windc1<00> &red
-    Lookup: windc2 => 1.2.3.2 windc2<00> &green
     Lookup: windc3 => 1.2.3.3 windc3<00> &green
     Lookup: bogon => name_query failed to find name bogon &red

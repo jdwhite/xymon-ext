@@ -8,7 +8,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2014 Jason White <jdwhite@menelos.com>
+Copyright (c) 2015 Jason White <jdwhite@menelos.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -69,7 +69,6 @@ $::HOSTTAG = 'wins';
 #
 %::test_hosts = (
 	'windc1' => '129.186.6.1',
-	'windc2' => '129.186.6.2',
 	'windc3' => '129.186.78.28',
 	'windc4' => '129.186.124.249',
 	'windc5' => '129.186.88.245'
