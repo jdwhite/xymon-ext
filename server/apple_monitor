@@ -127,13 +127,13 @@ foreach my $event (@{$main::EVENTLOG->{detailedTimeline}}) {
 	#print Dumper $event,"\n"; next;
 	$event->{message} =~ s/^\s*//;
 	my($entry) = sprintf("===== %s - %s =====\n".
-	                     "  Type: %s\n".
 	                     "Posted: %s\n".
+	                     "  Type: %s\n".
 	                     "  Date: %s - %s\n".
 	                     " Issue: %s\n\n",
 	                 $event->{messageTitle}, $event->{usersAffected},
-	                 $event->{statusType},
 	                 $event->{datePosted},
+	                 $event->{statusType},
 	                 $event->{startDate}, $event->{endDate},
 	                 wrap("", "        ", $event->{message})
 	);
@@ -247,13 +247,13 @@ foreach my $service (keys %{$main::EVENTLOG->{dashboard}->{Services}}) {
 			$event->{message} =~ s/^\s*//;
 
 			my($entry) = sprintf("===== %s - %s =====\n".
-			                     "  Type: %s\n".
 			                     "Posted: %s\n".
+			                     "  Type: %s\n".
 			                     "  Date: %s - %s\n".
 			                     " Issue: %s\n\n",
 		        	         $event->{messageTitle}, $event->{usersAffected},
-			                 $event->{statusType},
 			                 $event->{datePosted},
+			                 $event->{statusType},
 			                 $event->{startDate}, $event->{endDate},
 			                 wrap("", "        ", $event->{message})
 			);
