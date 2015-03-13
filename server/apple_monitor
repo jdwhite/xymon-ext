@@ -3,7 +3,6 @@
 # apple_monitor - report status of Apple's services.
 #
 # Jason White <jdwhite@menelos.com>
-# 8-Feb-2014
 #
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # Install in $XYMONCLIENTHOME/client/ext/.
@@ -18,14 +17,14 @@
 #           INTERVAL 10m
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #
-# The apple status page currently contains 45 Services. Since displaying
-# all 45 columns in a single host woule be visually disturbing, I recommend
-# placing this host on a separate 'vpage' so that the the tests are
-# displayed vertically.
+# The apple status page currently contains 45 Services. Since displaying 
+# all 45 columns in a single host is visually disturbing, I recommend 
+# placing this host on a separate 'vpage' so that the the tests are 
+# displayed vertically like they are hosts.
 #
-# I recommend using real, resolvable host name so that conn test works. This
-# will keep Xymon from generating a ton of alerts in the event of transient
-# network outages.
+# I recommend using a real, resolvable host name so that conn test 
+# works. This will keep Xymon from generating a ton of alerts in the 
+# event of transient network outages.
 #
 # hosts.cfg
 # ---------
@@ -58,7 +57,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 use strict;
 use warnings;
-use Data::Dumper;
+#use Data::Dumper;
 use LWP::UserAgent;
 use Text::Wrap;
 use JSON;
@@ -98,7 +97,8 @@ else
 	exit;
 }
 
-#$main::json_service_log = `cat /Users/mcp/system_status_en_US.js.issue.json`;
+# DEBUG - slurp test data
+#$main::json_service_log = do { local $/; <main::DATA> };
 
 # Decode JSON into a hash, converting any UTF-8 characters in the process.
 $main::EVENTLOG = decode_json $main::json_service_log;
@@ -472,28 +472,6 @@ sub get_machinename
 }
 
 #===========================================================================
-
+package main;
 __DATA__
-{"redirectUrl":null,"dashboard":{"Services":{"App Store":[],"Apple ID":[],"Apple Online Store":[],"Apple Pay":[],"Apple TV":[],"Back to My Mac":[],"Beats Music":[],"Dictation":[],"Documents in the Cloud":[],"FaceTime":[],"Find My Friends":[],"Find My iPhone, iPad, iPod touch, and Mac":[],"Game Center":[],"iBooks Store":[],"iChat":[],"iCloud Account & Sign In":[],"iCloud Backup":[],"iCloud Bookmarks & Tabs":[],"iCloud Calendar":[],"iCloud Contacts":[],"iCloud Drive":[],"iCloud Keychain":[],"iCloud Mail":[],"iCloud Notes":[],"iCloud Reminders":[],"iCloud Storage Upgrades":[],"iCloud Web Apps (iCloud.com)":[],"iMessage":[],"iMovie Theater":[],"iOS Device Activation":[],"iPhone Calls to iPad and Mac":[],"iTunes in the Cloud":[],"iTunes Match":[],"iTunes Radio":[],"iTunes Store":[],"iTunes U":[],"iWork for iCloud beta":[],"Mac App Store":[],"Mail Drop":[],"Maps":[],"Photo Print Products":[],"Photos":[],"Siri":[],"SMS Text Forwarding":[],"Spotlight suggestions":[]}},"detailedTimeline":[{"message":" Users were unable to access iCloud Mail or iCloud Notes. ","usersAffectedPercent":0.023,"usersAffected":"0.023% of users were affected","messageId":"1006","statusType":"ServiceOutage","messageTitle":"Multiple iCloud Services","datePosted":"02/10/2015 09:31 PST","messageBodyDates":{"_expectedResolution_":null,"_nextUpdate_":null},"messageUUID":"1017-10085-2086","epochStartDate":1423345500000,"epochEndDate":1423348080000,"startDate":"02/07/2015 13:45 PST","endDate":"02/07/2015 14:28 PST"}]}
-
-         'detailedTimeline' => [
-                                  {
-                                    'message' => ' Users were unable to access iCloud Mail or iCloud Notes. ',
-                                    'endDate' => '02/07/2015 14:28 PST',
-                                    'messageUUID' => '1017-10085-2086',
-                                    'usersAffectedPercent' => '0.023',
-                                    'epochEndDate' => '1423348080000',
-                                    'epochStartDate' => '1423345500000',
-                                    'usersAffected' => '0.023% of users were affected',
-                                    'messageId' => '1006',
-                                    'messageTitle' => 'Multiple iCloud Services',
-                                    'startDate' => '02/07/2015 13:45 PST',
-                                    'datePosted' => '02/10/2015 09:31 PST',
-                                    'messageBodyDates' => {
-                                                            '_nextUpdate_' => undef,
-                                                            '_expectedResolution_' => undef
-                                                          },
-                                    'statusType' => 'ServiceOutage'
-                                  }
-                                ]
-        };
+{"redirectUrl":null,"dashboard":{"Services":{"App Store":[],"Apple ID":[],"Apple Online Store":[],"Apple Pay":[],"Apple TV":[],"Back to My Mac":[],"Beats Music":[],"Dictation":[],"Documents in the Cloud":[],"FaceTime":[],"Find My Friends":[],"Find My iPhone, iPad, iPod touch, and Mac":[],"Game Center":[],"iBooks Store":[],"iChat":[],"iCloud Account & Sign In":[],"iCloud Backup":[],"iCloud Bookmarks & Tabs":[],"iCloud Calendar":[],"iCloud Contacts":[],"iCloud Drive":[],"iCloud Keychain":[],"iCloud Mail":[],"iCloud Notes":[],"iCloud Reminders":[],"iCloud Storage Upgrades":[],"iCloud Web Apps (iCloud.com)":[],"iMessage":[],"iMovie Theater":[],"iOS Device Activation":[],"iPhone Calls to iPad and Mac":[],"iTunes in the Cloud":[],"iTunes Match":[],"iTunes Radio":[],"iTunes Store":[],"iTunes U":[],"iWork for iCloud beta":[],"Mac App Store":[],"Mail Drop":[],"Maps":[],"Photo Print Products":[],"Photos":[],"Siri":[],"SMS Text Forwarding":[],"Spotlight suggestions":[]}},"detailedTimeline":[{"message":" Users may have been unable to access iCloud mail. ","usersAffectedPercent":0.0,"usersAffected":"Some users were affected","messageId":"1021","statusType":"ServiceOutage","messageTitle":"iCloud Mail","datePosted":"02/22/2015 03:02 PST","messageBodyDates":{"_expectedResolution_":null,"_nextUpdate_":null},"messageUUID":"1001-10010-410","epochStartDate":1424370600000,"epochEndDate":1424378400000,"startDate":"02/19/2015 10:30 PST","endDate":"02/19/2015 12:40 PST"},{"message":" During maintenance, Chase cardholders were not be able to add credit and debit cards from 9 p.m. PST until 1 a.m. PST; American Express cardholders were not be able to add credit cards from 1:00 a.m. PST to 3:00 a.m. PST. ","usersAffectedPercent":0.0,"usersAffected":"Some users were affected","messageId":"1022","statusType":"Maintenance","messageTitle":"Apple Pay - Maintenance","datePosted":"02/22/2015 03:02 PST","messageBodyDates":{"_expectedResolution_":null,"_nextUpdate_":null},"messageUUID":"1028-10190-2256","epochStartDate":1424581200000,"epochEndDate":1424602800000,"startDate":"02/21/2015 21:00 PST","endDate":"02/22/2015 03:00 PST"}]}

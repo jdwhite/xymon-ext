@@ -81,7 +81,7 @@ if ($resp->is_success) {
 }
 
 # DEBUG - slurp test data
-#$main::HTML = do { local $/; <DATA> };
+#$main::HTML = do { local $/; <main::DATA> };
 
 $main::HTML =~ s/(\n|\r)//og;
 
