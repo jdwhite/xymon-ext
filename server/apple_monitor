@@ -88,7 +88,8 @@ my($resp) = $ua->request($req);
 
 # Check the outcome of the response.
 $main::json_service_log = "";
-if ($resp->is_success) {
+if ($resp->is_success)
+{
 	$main::json_service_log = $resp->content;
 }
 else
@@ -115,59 +116,10 @@ $main::EVENTLOG = decode_json $main::json_service_log;
 #
 
 #
-# Generate detailed timeline log.
-#
-# This limited historical data is part of the JSON payload, but it doesn't
-# tie to any particular test. Its contents could be reported as a 'timeline'
-# test.
-#
-$main::TIMELINE = "Detailed Timeline of Events\n".
-                  "===========================\n";
-foreach my $event (@{$main::EVENTLOG->{detailedTimeline}}) {
-	#print Dumper $event,"\n"; next;
-	$event->{message} =~ s/^\s*//;
-	my($entry) = sprintf("===== %s - %s =====\n".
-	                     "Posted: %s\n".
-	                     "  Type: %s\n".
-	                     "  Date: %s - %s\n".
-	                     " Issue: %s\n\n",
-	                 $event->{messageTitle}, $event->{usersAffected},
-	                 $event->{datePosted},
-	                 $event->{statusType},
-	                 $event->{startDate}, $event->{endDate},
-	                 wrap("", "        ", $event->{message})
-	);
-
-	$main::TIMELINE .= $entry;
-}
-$main::TIMELINE .= "\nSource: <A HREF=\"${main::URL}\">${main::URL}</a>\n";
-
-#print $main::TIMELINE,"\n"; exit
-
-#
-# Send Timeline status update.
-#
-my($TESTNAME) = "Timeline";
-my($status) = "OK";
-my($COLOR) = "green";
-
-# Reset vars to defaults.
-&Xymon::init_xymon_namespace;
-
-# Host this test is reporting for as defined in hosts.cfg.
-&Xymon::set_machinename("www,apple,com");
-
-&Xymon::set_summary($status);
-&Xymon::set_testname($TESTNAME);
-
-&Xymon::send_status(
-	"message"  => $main::TIMELINE
-);
-
-#
 # Process each service; send status update.
 #
-foreach my $service (keys %{$main::EVENTLOG->{dashboard}->{Services}}) {
+foreach my $service (keys %{$main::EVENTLOG->{dashboard}->{Services}}, "Timeline")
+{
 	my($TESTNAME) = $service;
 	my($status) = "OK";
 	my($COLOR) = "clear";
@@ -184,12 +136,16 @@ foreach my $service (keys %{$main::EVENTLOG->{dashboard}->{Services}}) {
 	$TESTNAME =~ s/[\(\)]//go;
 	$TESTNAME =~ s/\s/_/go;
 	$TESTNAME =~ s/\./,/go;
+	$TESTNAME =~ s/\&/and/go;
 	
-	if (scalar(@{$main::EVENTLOG->{dashboard}->{Services}->{$service}}) != 0) {
+	if ($service ne "Timeline" &&
+	    scalar(@{$main::EVENTLOG->{dashboard}->{Services}->{$service}}) != 0)
+	{
 		#
 		# Process service events
 		#
-		foreach my $item (@{$main::EVENTLOG->{dashboard}->{Services}->{$service}}) {
+		foreach my $item (@{$main::EVENTLOG->{dashboard}->{Services}->{$service}})
+		{
 			$status = $item->{statusType};
 			$status =~ s/([a-z]+)([A-Z])/$1 $2/g;
 			#foreach my $key (keys %{$item}) {
@@ -197,11 +153,11 @@ foreach my $service (keys %{$main::EVENTLOG->{dashboard}->{Services}}) {
 			#}
 
 			if ($status eq "Maintenance" ||
-			    $status eq "ServiceIssue")
+			    $status eq "Service Issue")
 			{
 				&Xymon::set_testcolor("yellow");
 			}
-			elsif ($status eq "ServiceOutage")
+			elsif ($status eq "Service Outage")
 			{
 				&Xymon::set_testcolor("red");
 			}
@@ -210,11 +166,14 @@ foreach my $service (keys %{$main::EVENTLOG->{dashboard}->{Services}}) {
 				&Xymon::set_testcolor("yellow");
 			}
 
-			$eventlog = sprintf("%s - %s\n%s\n%s\n",
+			$eventlog = sprintf("===== %s - %s =====\n".
+			                    "Posted: %s\n".
+			                    "  Type: %s\n".
+			                    " Issue: %s\n\n",
+			                    $item->{messageTitle}, $item->{usersAffected},
 			                    $item->{datePosted},
-			                    $item->{messageTitle},
+			                    $status,
 			                    $item->{shortMessage},
-			                    $item->{usersAffected}
 			);
 		}
 	}
@@ -223,14 +182,20 @@ foreach my $service (keys %{$main::EVENTLOG->{dashboard}->{Services}}) {
 		#
 		# No event data for this service.
 		#
-		&Xymon::set_testcolor("green");
+		&Xymon::set_testcolor("green") unless ($service eq "Timeline");
 	}
 
 	&Xymon::set_summary($status);
 	&Xymon::set_testname($TESTNAME);
 
-	$message .= sprintf("%s: %s &%s\n\n", $service, $status, &Xymon::get_testcolor());
-	if ($eventlog ne "") {
+	if ($service ne "Timeline")
+	{
+		$message .= sprintf("%s: %s &%s\n", $service, $status, &Xymon::get_testcolor());
+	}
+	$message .= "\n";
+
+	if ($eventlog ne "")
+	{
 		$message .= "${eventlog}\n";
 	}
 
@@ -238,22 +203,31 @@ foreach my $service (keys %{$main::EVENTLOG->{dashboard}->{Services}}) {
 	# Check detailed timeline message titles for entries matching current
 	# service title and append timeline entry to service information page.
 	#
-	foreach my $event (@{$main::EVENTLOG->{detailedTimeline}}) {
-		#print Dumper $event,"\n"; next;
-
-		#print "DEBUG: Comparing service='${service}' with event '$event->{messageTitle}'\n";
-
-		if ($event->{messageTitle} =~ /^${service}/i) {
+	my($timeline_header) = 0;
+	foreach my $event (@{$main::EVENTLOG->{detailedTimeline}})
+	{
+		if ($service eq "Timeline" || $event->{messageTitle} =~ /^${service}/i)
+		{
+			if ($timeline_header == 0)
+			{
+				my($TimelineName) = ($service eq "Timeline" ? "All Services" : $service);
+				
+				$timeline_header = 1;
+				$message .= "<<<< Detailed Service Timeline: $TimelineName >>>>\n\n";
+			}
 			$event->{message} =~ s/^\s*//;
+			my($status) = $event->{statusType};
+			$status =~ s/([a-z]+)([A-Z])/$1 $2/g;
 
-			my($entry) = sprintf("===== %s - %s =====\n".
+			my($entry) = sprintf("===== %s - %s [%s] =====\n".
 			                     "Posted: %s\n".
 			                     "  Type: %s\n".
 			                     "  Date: %s - %s\n".
 			                     " Issue: %s\n\n",
 		        	         $event->{messageTitle}, $event->{usersAffected},
+			                 ($event->{endDate} !~ /^\s*$/) ? "resolved" : "open",
 			                 $event->{datePosted},
-			                 $event->{statusType},
+			                 $status,
 			                 $event->{startDate}, $event->{endDate},
 			                 wrap("", "        ", $event->{message})
 			);
@@ -337,8 +311,10 @@ sub send_status
 	#
 	# Validate passed arguments; warn if invalid.
 	#
-	foreach my $key (keys %args) {
-		if (! defined($validargs{$key})) {
+	foreach my $key (keys %args)
+	{
+		if (! defined($validargs{$key}))
+		{
 			print STDERR "${main::PROGRAM_NAME}: in send_staus(): ".
 			             "invalid argument $key\n";
 		}
@@ -371,7 +347,8 @@ sub send_status
 	#
 	# Send to Xymon or to stdout if run interactively.
 	#
-	if (defined($ENV{XYMON})) {
+	if (defined($ENV{XYMON}))
+	{
 		# "at" sign as argument means "read message data from 
 		# stdin". DON'T USE A DASH AS THE xymon USAGE MESSAGE 
 		# SHOWS ELSE ONLY THE SUMMARY INFORMATION IS DISPLAYED 
@@ -379,7 +356,8 @@ sub send_status
 		# CORRECT.
 
 		my($cmd) = "$ENV{XYMON} $ENV{XYMSRV} @";
-		open(XYMON, "| ${cmd}") || do {
+		open(XYMON, "| ${cmd}") || do
+		{
 			print "Error invoking ${cmd} - $!";
 			exit;
 		};
@@ -402,12 +380,14 @@ sub set_testcolor
 {
 	my($new_testcolor) = shift(@_);
 
-	if (! defined($Xymon::COLOR_PRIORITY{$new_testcolor})) {
+	if (! defined($Xymon::COLOR_PRIORITY{$new_testcolor}))
+	{
 		return &Xymon::get_testcolor;
 	}	
 	
 	if ($Xymon::COLOR_PRIORITY{$Xymon::COLOR} <
-	    $Xymon::COLOR_PRIORITY{$new_testcolor}) {
+	    $Xymon::COLOR_PRIORITY{$new_testcolor})
+	{
 		$Xymon::COLOR = $new_testcolor;
 	}
 
@@ -437,9 +417,11 @@ sub get_summary
 {
 	my($SUMMARY) = $Xymon::SUMMARY;
 
-	if ($SUMMARY =~ /^\s*$/o) {
+	if ($SUMMARY =~ /^\s*$/o)
+	{
 		if ($Xymon::COLOR_PRIORITY{$Xymon::COLOR} >
-		    $Xymon::COLOR_PRIORITY{"green"}) {
+		    $Xymon::COLOR_PRIORITY{"green"})
+		{
 			$SUMMARY = "NOT OK";
 		}
 		else
@@ -481,7 +463,10 @@ sub get_machinename
 #
 {
 	my($MACHINE) = $Xymon::MACHINE;
-	if ($MACHINE =~ /^\s*$/) { $MACHINE = "dummy,example,com"; }
+	if ($MACHINE =~ /^\s*$/)
+	{
+		$MACHINE = "dummy,example,com";
+	}
 
 	return $MACHINE;
 }
