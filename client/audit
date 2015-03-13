@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 #
-# audit - audit system for security related information
+# audit - audit system for security related information and updates
 #
 # Jason White <jdwhite@menelos.com>
 #
@@ -8,7 +8,7 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2014 Jason White <jdwhite@menelos.com>
+Copyright (c) 2015 Jason White <jdwhite@menelos.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -35,9 +35,11 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 # ===================================
 #
 #   - 'pkg_admin audit' for systems using pkgsrc.
-#   - yum with the yum-security plugin for RHEL/FEDORA/CENTOS systems.
-#   - aptitude for Debian/Ubuntu based systems.
+#   - yum with the yum-security plugin for RHEL/Fedora/CENTOS systems.
 #   - softwareupdate for OS X systems.
+#
+# ToDo:
+#   - aptitude for Debian/Ubuntu based systems.
 #
 # When the test is run, each auditor application is checked for and 
 # invoked if it exists. This supports environments that use additional 
@@ -103,7 +105,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 use strict;
 #use warnings;
-use Data::Dumper;
+#use Data::Dumper;
 use English; # $PROGRAM_NAME
 
 #
@@ -197,11 +199,13 @@ sub audit_softwareupdate
 	#
 	# Analyze update data.
 	#
-	if ($updates =~ /^No new software available/iom) {
+	if ($updates =~ /^No new software available/iom)
+	{
 		&Xymon::set_testcolor("green");
 		&Xymon::set_status_summary("no updates available");
 	}
-	elsif ($updates =~ /^Software Update found/iom) {
+	elsif ($updates =~ /^Software Update found/iom)
+	{
 		$DIAGINFO .= "\nOS X System Software Updates\n".
 		             "----------------------------\n";
 
@@ -224,7 +228,9 @@ sub audit_softwareupdate
 			$DIAGINFO .= "&${linecolor} $line\n";
 		}
 	}
-	else {
+	else
+	{
+		$DIAGINFO .= "Unexpected output from 'softwareupdate':\n$updates";
 		&Xymon::set_testcolor("red");
 	}
 
