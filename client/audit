@@ -31,15 +31,15 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =cut
 
 #
-# Supported Auditors and Environments
+# Supported Environments and Auditors
 # ===================================
 #
-#   - 'pkg_admin audit' for systems using pkgsrc.
-#   - yum with the yum-security plugin for RHEL/Fedora/CENTOS systems.
-#   - softwareupdate for OS X systems.
+#   - pkgsrc: 'pkg_admin audit'
+#   - RHEL/Fedora/CENTOS: yum with the yum-security plugin
+#   - OS X: softwareupdate
 #
 # ToDo:
-#   - aptitude for Debian/Ubuntu based systems.
+#   - Debian/Ubuntu-based systems: aptitude
 #
 # When the test is run, each auditor application is checked for and 
 # invoked if it exists. This supports environments that use additional 
@@ -67,27 +67,33 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 # softwareupdate (Darwin)
 # -----------------------
-# The softwareupdate command returns output over two lines. This test combines 
-# them into one line for displaying. When selecting items to go in the ok 
-# file, use the output that this test displays, NOT the output from 
-# softwareupdate. Example:
+# The softwareupdate command returns output over two lines for each 
+# available update. This test combines them into one line for 
+# displaying. When selecting items to go in the ok file, use the output 
+# the audit test displays, NOT the output from softwareupdate. Example:
+#
 #   JavaForOSX-1.0 - Java for OS X 2012-005 (1.0), 65288K [recommended]
 #
-# yum with yum-security
-# ---------------------
+# While the updates reported by 'softwareupdate' aren't strictly 
+# security related in nature, the majority of them are. Given that these 
+# updates are for base system software components, the author feels it 
+# appropriate to include them in an audit test.
+#
+# yum with yum-security plugin
+# ----------------------------
 # Use the entire line from 'yum updateinfo security'; example:
 #   RHSA-2014:0043 Moderate/Sec.  bind-32:9.8.2-0.23.rc1.el6_5.1.x86_64
 #
 # aptitude
 # --------
-# [to be continued]
+# [not yet implemented]
 #
 # A note on the Xymon namespace usage.
 # ====================================
-# I started using the "Xymon" package namespace here as a prelude to putting 
-# those package vars/functions in their own module. When that happens, 
-# only the function calls will be exported and all package variables will 
-# remain private. Coming in a future release.
+# I started using the "Xymon" package namespace here as a prelude to 
+# putting those package vars/functions in their own module. When 
+# implmented, only the function calls will be exported and all package 
+# variables will remain private. Coming in a future release.
 #
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # Install in $XYMONCLIENTHOME/client/ext/.
@@ -124,13 +130,14 @@ $main::OKFILE = "/var/xymon/audit/ok";
 	'clear'  => 1
 );
 
-$Xymon::STATUS_COLOR    = "clear";
-$Xymon::STATUS_SUMMARY  = "";
+$Xymon::STATUS_COLOR     = "clear";
+$Xymon::STATUS_SUMMARY   = "";
 #$Xymon::STATUS_DIAGINFO = "";
 #$Xymon::STATUS_LIFETIME = "";
 #$Xymon::STATUS_GROUP    = "";
 
 $main::message = "";
+$main::summary_info = "";
 
 #
 # Read contents of OK file; entries in this file will be flagged green.
@@ -177,7 +184,7 @@ exit;
 
 sub audit_softwareupdate
 #
-# Check for recommended software updates under OS X.
+# Check for available software updates under OS X.
 #
 {
 	my($updates);
@@ -203,11 +210,12 @@ sub audit_softwareupdate
 	{
 		&Xymon::set_testcolor("green");
 		&Xymon::set_status_summary("no updates available");
+		$DIAGINFO .= "\n&green OS X Software Updates: no updates available.\n";
 	}
 	elsif ($updates =~ /^Software Update found/iom)
 	{
-		$DIAGINFO .= "\nOS X System Software Updates\n".
-		             "----------------------------\n";
+		$DIAGINFO .= "\nOS X System Software Updates Available\n".
+		             "--------------------------------------\n";
 
 		&Xymon::set_status_summary("updates available");
 
@@ -230,7 +238,7 @@ sub audit_softwareupdate
 	}
 	else
 	{
-		$DIAGINFO .= "Unexpected output from 'softwareupdate':\n$updates";
+		$DIAGINFO .= "&red Unexpected output from 'softwareupdate':\n$updates";
 		&Xymon::set_testcolor("red");
 	}
 
@@ -257,7 +265,7 @@ sub audit_pkgsrc
 	#
 	my($cmd) = "/usr/pkg/sbin/pkg_admin -v audit";
 	open(AUDIT, "$cmd 2>&1 |") || do {
-		$DIAGINFO .= "Error running '$cmd' - $!";
+		$DIAGINFO .= "&red Error running '$cmd' - $!";
 	};
 	while(<AUDIT>) {
 		$updates .= $_;
@@ -270,6 +278,7 @@ sub audit_pkgsrc
 	if ($updates =~ /^No vulnerabilities found/iom) {
 		&Xymon::set_testcolor("green");
 		&Xymon::set_status_summary("no vulnerable packages found");
+		$DIAGINFO .= "\n&green pkgsrc: no vulnerable packages found.\n";
 	}
 	else {
 		$DIAGINFO .= "\nVulnerable pkgsrc Packages\n".
@@ -288,7 +297,7 @@ sub audit_pkgsrc
 			else {
 				$linecolor = "yellow";
 			}
-		
+
 			# If line exists in audit file, set condition green.
 			if (exists $main::ok_entries{$line}) {
 				$linecolor = "green";
@@ -319,7 +328,7 @@ sub audit_yum_security
 	my($have_security_plugin);
 	my($cmd) = "/usr/bin/yum -h";
 	open(YUM, "$cmd 2>&1 |") || do {
-		$DIAGINFO .= "Error running '$cmd' - $!\n";
+		$DIAGINFO .= "&red Error running '$cmd' - $!\n";
 	};
 	while(<YUM>) {
 		if (/Loaded plugins:.*\ssecurity\s*/io) {
@@ -347,7 +356,7 @@ sub audit_yum_security
 	#open(YUM, "yum updateinfo list bzs 2>&1 |") || die "$!";
 	my($cmd) = "/usr/bin/yum updateinfo security";
 	open(YUM, "$cmd 2>&1 |") || do {
-		$DIAGINFO .= "Error running '$cmd' - $!\n";
+		$DIAGINFO .= "&red Error running '$cmd' - $!\n";
 	};
 	while(<YUM>) {
 		if (/^(.+ needed for security),/io) {
@@ -371,6 +380,8 @@ sub audit_yum_security
 	if (scalar(@update_list) > 0) {
 		$DIAGINFO .= "\nSecurity Updates Available\n".
 		             "--------------------------\n";
+	} else {
+		$DIAGINFO .= "\n&green yum-security: no updates needed.\n";
 	}
 	foreach my $line (@update_list) {
 		my($advisory, $severity, $package) = split(/\s+/, $line, 3);
@@ -482,7 +493,7 @@ sub send_status
 
 	if ($STATUS_SUMMARY =~ /^\s*$/o) {
 		$STATUS_SUMMARY = (&Xymon::get_testcolor() eq "green") ?
-			"OK" : "NOT OK";
+			"OK" : "check results";
 	}
 
 	my($MESSAGE)   = sprintf("status%s%s %s.%s %s %s - %s: %s\n%s",
