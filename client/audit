@@ -95,6 +95,17 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 # implmented, only the function calls will be exported and all package 
 # variables will remain private. Coming in a future release.
 #
+# Additional Auditor-specific Installation Instructions
+# =====================================================
+# Systems using yum and running xymon as a non-privledged user will need use 
+# sudo to elevate privledges when calling yum.
+# 1) Place the following in sudoers or in a separate file in sudoers.d:
+#
+#      xymon   ALL= NOPASSWD: /usr/bin/yum
+#
+# 2) In sudoers, comment out "Defaults requiretty" since xymon has no tty when 
+#    running this script.
+#
 #-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # Install in $XYMONCLIENTHOME/client/ext/.
 # Modify $XYMONCLIENTHOME/etc/clientlaunch.cfg and add this block:
@@ -119,6 +130,8 @@ use English; # $PROGRAM_NAME
 # 
 $main::TESTNAME = "audit";
 $main::MACHINE  = $ENV{MACHINE};
+
+$main::SUDO	= '/usr/bin/sudo';
 
 # Location of file listing advisories which can be considered green.
 $main::OKFILE = "/var/xymon/audit/ok";
@@ -354,7 +367,7 @@ sub audit_yum_security
 	my(@update_list);
 	#open(YUM, "yum updateinfo list cve 2>&1 |") || die "$!";
 	#open(YUM, "yum updateinfo list bzs 2>&1 |") || die "$!";
-	my($cmd) = "/usr/bin/yum updateinfo security";
+	my($cmd) = "${main::SUDO} /usr/bin/yum updateinfo security";
 	open(YUM, "$cmd 2>&1 |") || do {
 		$DIAGINFO .= "&red Error running '$cmd' - $!\n";
 	};
@@ -364,7 +377,7 @@ sub audit_yum_security
 
 			if ($updates =~ /No updates needed for security/i) {
 				&Xymon::set_status_summary("no security updates needed");
-				$linecolor = "green";
+				&Xymon::set_testcolor("green");
 			}
 		}
 		elsif (/\s(Low|Moderate|Important)\/Sec.\s/io) {
@@ -382,6 +395,7 @@ sub audit_yum_security
 		             "--------------------------\n";
 	} else {
 		$DIAGINFO .= "\n&green yum-security: no updates needed.\n";
+		&Xymon::set_testcolor("green");
 	}
 	foreach my $line (@update_list) {
 		my($advisory, $severity, $package) = split(/\s+/, $line, 3);
