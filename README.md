@@ -2,29 +2,32 @@ xymon-ext
 =========
 External Xymon tests and support programs.
 
-These tests use a lot of the same code, and I plan to place that code into a perl module down the road.
-
 License
 -------
-The items in this repisotiry are licensed under the [MIT license](http://opensource.org/licenses/MIT), except for client/dumpurl.js which has no license.
+The items in this repisotiry are licensed under the [MIT license](http://opensource.org/licenses/MIT).
 
-client/test_framework
----------------------
-This is a sample test framework for creating other tests.  It's designed as a prelude to writing a Xymon module and contains a couple 
-subroutines designed to take some of the drudgery out of writing Xymon tests.
+Layout
+------
+Items in the <tt>ext</tt> directory of this repository are patterned after the Xymon file layout with the <tt>ext</tt> folder containing the Xymon server-side tests and <tt>ext/client</tt> containing the client-side tests.
 
- * **Xymon::set_testcolor** - tracks the canonical test color. When called the color is only set as the canonical color if it's severity is 
-higher than the current value (obtainable using Xymon::get_tesetcolor).
+ext/lib/perl5/XymonEXT.pm
+-------------------------
+Perl module containing common Xymon related code used by modules in this repository.
 
- * **Xymon::send_status** - sends a status update. Parameters such as lifetime, group, hostname, testname, color, message, and summary can be 
-passed to this subroutine and these criterion will be used to automatically format and send the status message.
+ext/client/test_framework
+-------------------------
+This is a sample test framework for creating other tests.  It's designed as a prelude to writing a Xymon module and contains a couple subroutines designed to take some of the drudgery out of writing Xymon tests.
+
+ * **XymonEXT::set_testcolor** - tracks the canonical test color. When called the color is only set as the canonical color if it's severity is higher than the current value (obtainable using Xymon::get_tesetcolor).
+
+ * **XymonEXT::send_status** - sends a status update. Parameters such as lifetime, group, hostname, testname, color, message, and summary can be passed to this subroutine and these criterion will be used to automatically format and send the status message.
 
 There are also other getter/setter subroutines that can be used in leiu of passing certain parameters to **Xymon::send_status**.
 
-client/socket_monitor
----------------------
-Monitors network socket utilization that, in excess, causes the "Can't assign requested address" error that exists in OS X Mavericks 10.9.1-10.9.2. 
-More information can be found [here](https://discussions.apple.com/thread/5551686).
+ext/client/socket_monitor
+-------------------------
+Monitors network socket utilization that, in excess, causes the "Can't assign requested address" error that exists in OS X Mavericks 10.9.1-10.9.2.  More information can be found [here](https://discussions.apple.com/thread/5551686).
+**This test appars to be no longer needed in OS X 10.10 and later.**
 
     Sun Feb 23 21:43:31 2014 - socket: OK
 
@@ -42,8 +45,8 @@ More information can be found [here](https://discussions.apple.com/thread/555168
        SYN_SENT:   15 green
       TIME_WAIT:    0 green
 
-client/osx-cacheserver_monitor
-----------------------------
+ext/client/osx-cacheserver_monitor
+----------------------------------
 Monitors the running state and cache utilization by data type of the OS X Server caching server.
 
 Example output:
@@ -71,8 +74,8 @@ Example output:
                       Music:     0M
                       Other:   769M
 
-client/afs_servmon
-------------------
+ext/client/afs_servmon
+----------------------
 Monitors an AFS file server through the use of rxdebug and 'bos status' commands.
 
 Example output:
@@ -114,8 +117,8 @@ Example output:
     Instance fs, currently running normally. &green
         Auxiliary status is: file server running. &green
 
-client/raidframe
-----------------
+ext/client/raidframe
+--------------------
 Monitors status of a raidframe RAID array. Tested under NetBSD.
 
 Example ouptut:
@@ -151,20 +154,32 @@ Example ouptut:
     Parity Re-write is 100% complete. &green
     Copyback is 100% complete. &green
 
-client/dwm_report
------------------
+ext/client/tm_status
+--------------------
+Report status of Time Machine backups. Warns if Time Machine volume is not mounted or if latest backups is more than 3 hours old.
+
+   ====================================================
+   Name          : Untitled
+   Kind          : Local
+   Mount Point   : /Volumes/TimeMachine
+   ID            : 7736DE6E-FA75-44A8-B03F-47334230C3
+   Oldest backup : 2015-12-11 20:53:30 (36d 1h:17m:8s ago)
+   Latest backup : 2016-01-16 21:29:02 (41m:36s ago)
+
+ext/client/dwm_report
+---------------------
 A Daily/Weekly/Monthly report test for NetBSD designed to scan for interesting keywords in these reports and report a status accordingly. This is just a beginning framework. I'm not perfrectly happy with it, but i'm throwing it out for other to see and possibly stimulate discussion on how to make this test better. I'd also like to support Linux periodic reports in the future.
 
-server/dropbox_monitor
-----------------------
+ext/dropbox_monitor
+-------------------
 Monitors status of Dropbox service by scraping http://status.dropbox.com and parsing the values inside the 'status-line' and 'status-message' div tags.
 
     Sun Feb 23 21:41:23 2014 - status: running normally.
     
     Dropbox is running normally.
 
-server/google_monitor
----------------------
+ext/google_monitor
+------------------
 Monitors Google Apps services using JSON data retrieved from http://www.google.com/appsstatus/json/en. Each service is reported as a separate test.
 Example output from the Gmail test:
 
@@ -199,8 +214,8 @@ Example output from the Gmail test:
 
 Google_monitor has not been tested against a full service outage, so the event type is unknown to the author at this time. Unknown event types are flagged as yellow and diagnostic data will be presented on the test page. The author would be grateful for any reports of unknown type codes. 
 
-server/box_monitor
-------------------
+ext/box_monitor
+---------------
 Monitors Box.com cloud services using data retrieved from http://status.box.com. Each service is reported as a separate test.
 Example output from the sync service test:
 
@@ -228,8 +243,8 @@ Example output from the sync service test:
 
 The extended log is only available for tests that have experienced issues in the past five days. Please note that while the timestamp at the beginning of each event log entry is converted to the time zone of your choice, any time references in the body of the event are not since the formats of those are more free-form.  I do plan to try and address this in a later release as well as automatically determine the local time zone so it doesn't have to be hard coded at the end of box2localtime().
 
-server/apple_monitor
---------------------
+ext/apple_monitor
+-----------------
 Monitors Apple's numerous services using data retrieved from http://www.apple.com/support/systemstatus/.
 
 Apple's status page currently includes 45 tests. Since they are no longer categorized, I recommend configuring a separate 'vpage' to 
@@ -253,8 +268,8 @@ Example output from the iCloud host, Calendar service test:
 In addition to the service tests, an additional 'Timeline' test is reported containing the detailed timeline data at the bottom of the 
 status page. Detailed status data is also included on a per-test basis when appropriate.
 
-server/wins
------------
+ext/wins
+--------
 This test queries WINS servers and checks for a supplied expected result.
 
 Example output:
@@ -262,3 +277,23 @@ Example output:
     Lookup: windc1 => MISMATCH! expected=1.2.3.1, received=1.2.3.5 windc1<00> &red
     Lookup: windc3 => 1.2.3.3 windc3<00> &green
     Lookup: bogon => name_query failed to find name bogon &red
+
+ext/nest_thermo
+---------------
+Uses the standard Nest API to query devices. Currently only tested with termostats. 
+** Requires API access to your nest account. **
+
+Example output:
+
+                Name: Living Room Thermostat (Nest)
+            Presence: home
+                Temp: 67
+         Target Temp: 67
+     Target Temp (H): 75
+     Target Temp (L): 68
+            Humidity: 35
+           HVAC Mode: heat
+               State: off
+           Away Temp: 60/78
+         Last Update: Sat Jan 16 21:52:46 2016
+    Software Version: 5.1.6rc4
