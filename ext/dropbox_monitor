@@ -1,33 +1,14 @@
 #!/usr/bin/perl
 #
-# dropbox_monitor - report status of Dropbox service
+# dropbox_monitor - report status of Dropbox services.
 #
 # Jason White <jdwhite@menelos.com>
-# Initial version: 17-Jan-2014
 #
-#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-# Install in $XYMONCLIENTHOME/client/ext/.
-# Modify $XYMONCLIENTHOME/etc/clientlaunch.cfg and add this block:
-#
-# # Dropbox Monitor
-# [dropboxmon]
-#         ENABLED
-#         ENVFILE $XYMONCLIENTHOME/etc/xymonclient.cfg
-#         CMD $XYMONCLIENTHOME/ext/dropbox_monitor
-#         LOGFILE $XYMONCLIENTHOME/logs/dropbox_monitor.log
-#         INTERVAL 5m
-#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-#
-# hosts.cfg
-# ---------
-# page Dropbox Dropbox Services
-# title Dropbox Services
-# 0.0.0.0    status.dropbox.com    # conn NAME:"Dropbox"
-#
-=license
+=begin License
+
 The MIT License (MIT)
 
-Copyright (c) 2015 Jason White <jdwhite@menelos.com>
+Copyright (c) 2016 Jason White <jdwhite@menelos.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -45,23 +26,45 @@ FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
 COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+=end License
 =cut
+
 #
+# This test can be installed as a client or server test, though a server
+# test makes more sense given the client we're testing is not the local host.
+#
+# Install in $XYMONHOME/etc/tasks.d/dropbox_monitor
+#  or add to $XYMONHOME/etc/tasks.cfg
+#
+#
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+# # Dropbox Monitor
+# [dropboxmon]
+#         ENABLED
+#         ENVFILE $XYMONCLIENTHOME/etc/xymonclient.cfg
+#         CMD $XYMONCLIENTHOME/ext/dropbox_monitor
+#         LOGFILE $XYMONCLIENTHOME/logs/dropbox_monitor.log
+#         INTERVAL 5m
+#-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 use strict;
 use warnings;
-use Text::Wrap;
 use LWP::UserAgent;
+#use Text::Wrap;
+use English;
+use File::Basename qw(dirname);
+use Cwd qw(abs_path);
+use lib dirname(abs_path $0) . '/lib/perl5';
+use lib dirname(abs_path $0) . '/../lib/perl5';
+use XymonEXT;
 
 ## Globals ##
-$main::TESTNAME	= 'status';
-$main::COLOR	= "clear";	# uncertain by default
-$main::DATA     = "";
-$main::MACHINE	= "status,dropbox,com";	# What we report as.
-$main::URL      = "http://status.dropbox.com";
+# main::URL is for the reference on the status page.
+$main::URL = "http://status.dropbox.com";
 
 #
-# Fetch main page and process.
+# Fetch status page
 #
 my($ua) = LWP::UserAgent->new;
 my($req) = HTTP::Request->new(
@@ -72,7 +75,6 @@ my($req) = HTTP::Request->new(
 my($resp) = $ua->request($req);
 
 # Check the outcome of the response.
-$main::HTML = "";
 if ($resp->is_success) {
 	$main::HTML = $resp->content;
 } else {
@@ -80,96 +82,60 @@ if ($resp->is_success) {
 	exit;
 }
 
-# DEBUG - slurp test data
-#$main::HTML = do { local $/; <main::DATA> };
-
-$main::HTML =~ s/(\n|\r)//og;
-
 #
-# Grab status line and message text.
+# Process each service; send status update.
 #
-$::status_line = "";
-if ($main::HTML =~ /<div .*?id="status-line".*?>\s*(.+?)\s*<\/div>/ims) {
-	$::status_line = $1;
-	if ($::status_line =~ /^<[^>]+?>(.*)<\/[^>]+?>/) {
-		$::status_line = $1;
-	}
-}
+while($main::HTML =~ /<div\s+class="component-inner-container\s+status-(\w+).+?<span class="name">\s*([^<]+)<\/span>.+?<span class="component-status">\s*([^<]+).+?<\/div>/iogsm)
+{
+	my($testcolor) = $1;
+	my($service) = $2;
+	my($status) = $3;
+	my($message) = "";
+	my($eventlog) = "";
 
-$::status_message = "";
-if ($main::HTML =~ /<div .*?id="status-message".*?>\s*(.+?)\s*<\/div>/ims) {
-	$::status_message = $1;
-	if ($::status_message =~ /^<[^>]+?>(.*)<\/[^>]+?>/) {
-		$::status_message = $1;
-	}
-}
+	$testcolor =~ s/[\s\n\r]+$//o;
+	$service =~ s/[\s\n\r]+$//o;
+	$status =~ s/[\s\n\r]+$//o;
 
-#print "status_line='$::status_line'\n";
-#print "status_message='$::status_message'\n";
-#exit;
+	my($testname) = $service;
+	#print "color=$testcolor  testname=$testname   status=$status\n"; next;
 
-$main::status = $::status_line;
-if ($main::status !~ /running normally\.$/) {
-	$main::COLOR = "red";
-} else {
-	$main::COLOR = "green";
-}
+	if ($testcolor eq "orange") { $testcolor = "yellow"; }
+	set_testcolor("$testcolor");
 
-#
-# If we only have the a status line, don't frame it as a title.
-#
-if ($main::status_message !~ /^\s*$/o) {
-	$main::DATA .= sprintf("===== %s =====\n%s\n",
-	                       $main::status_line,
-	                       wrap("","",$main::status_message)
+	# Host this test is reporting for as defined in hosts.cfg.
+	set_machinename("www,dropbox,com");
+
+	# Munge test names to deal with problematic characters.
+	$testname =~ s/[\(\)]//go;
+	$testname =~ s/\s/_/go;
+	$testname =~ s/\./,/go;
+	$testname =~ s/\&/and/go;
+
+	set_summary($status);
+	set_testname($testname);
+
+	$message .= sprintf("&%s %s: %s\n", &get_testcolor(), $service, $status);
+	$message .= "\nSource: <A HREF=\"${main::URL}\">${main::URL}</a>\n";
+
+	#
+	# == Report findings ==
+	#
+	# Note send_status() takes a hash of arguments; it's like varargs for perl. :)
+	# Arguments are:
+	#
+	#   "lifetime" - lifetime of the report.
+	#   "group"    - reporing group
+	#   "hostname" - name of machine we report as
+	#   "testname" - name of test
+	#   "color"    - canonical test color to report
+	#   "message"  - the body of the rest report (diagnostic information)
+	#   "summary"  - brief text shown on first line after date and test name
+	#
+
+	send_status(
+		"message"  => $message,
 	);
-} else {
-	$main::DATA .= "${main::status_line}\n";
 }
-
-$main::DATA .= "\nSource: <A HREF=\"$main::URL\">$main::URL</A>\n";
-
-##
-## Generate status report.
-##
-
-# STATUS - Canonical status of test and its lifetime: status[+LIFETIME]
-#$STATUS = "status+25h ${main::MACHINE}.${main::TESTNAME} ${main::COLOR}";
-$main::STATUS = "status ${main::MACHINE}.${main::TESTNAME} ${main::COLOR}";
-
-# SUMMARY - datestamp and summary of the test.
-$main::SUMMARY = scalar(localtime(time))." - ${main::TESTNAME}: $main::status";
-
-# MESSAGE - status, summary, diagnostic data combined.
-$main::MESSAGE = "${main::STATUS} ${main::SUMMARY}\n\n${main::DATA}";
-
-##
-## Send to Xymon or to stdout if run interactively.
-##
-if (defined($ENV{XYMON})) {
-	# "at" sign as argument means "read message data from stdin".
-	# DON'T USE A DASH AS THE xymon USAGE MESSAGE SHOWS ELSE ONLY
-	# THE SUMMARY INFORMATION IS DISPLAYED AND NONE OF $main::DATA.
-	# THE MANPAGE USAGE OF "@" IS CORRECT.
-	open(XYMON, "| $ENV{XYMON} $ENV{XYMSRV} @") || do {
-	print "Error invoking $ENV{XYMON} $ENV{XYMSRV} @ - $!";
-		exit;
-	};
-	select(XYMON);
-} else {
-	print STDERR "*** Not invoked by Xymon; sending to stdout ***\n\n";
-}
-
-print $main::MESSAGE;
-close(XYMON);
 
 exit;
-
-__DATA__
-<div id="status"></div>
-<div id="status-line">
-   <h1>Dropbox is experiencing issues.</h1>
-</div>
-<div id="status-message">
-   <h2>We are aware of an issue currently affecting the Dropbox site. We have identified the cause, which was the result of an issue that arose during routine internal maintenance, and are working to fix this as soon as possible. We apologize for any inconvenience.</h2>
-</div>
