@@ -18,15 +18,15 @@ ext/client/test_framework
 -------------------------
 This is a sample test framework for creating other tests.  It's designed as a prelude to writing a Xymon module and contains a couple subroutines designed to take some of the drudgery out of writing Xymon tests.
 
- * **XymonEXT::set_testcolor** - tracks the canonical test color. When called the color is only set as the canonical color if it's severity is higher than the current value (obtainable using Xymon::get_tesetcolor).
+ * **XymonEXT::set_testcolor** - tracks the canonical test color. When called the color is only set as the canonical color if it's severity is higher than the current value (obtainable using Xymon::get_testcolor).
 
  * **XymonEXT::send_status** - sends a status update. Parameters such as lifetime, group, hostname, testname, color, message, and summary can be passed to this subroutine and these criterion will be used to automatically format and send the status message.
 
-There are also other getter/setter subroutines that can be used in leiu of passing certain parameters to **Xymon::send_status**.
+There are other getter/setter subroutines that can be used in leiu of passing certain parameters to **Xymon::send_status**.
 
 ext/client/socket_monitor
 -------------------------
-Monitors network socket utilization that, in excess, causes the "Can't assign requested address" error that exists in OS X Mavericks 10.9.1-10.9.2.  More information can be found [here](https://discussions.apple.com/thread/5551686).
+Monitors network socket usage that, in excess, causes the "Can't assign requested address" error that exists in OS X Mavericks 10.9.1-10.9.2.  More information can be found [here](https://discussions.apple.com/thread/5551686).
 **This test appars to be no longer needed in OS X 10.10 and later.**
 
     Sun Feb 23 21:43:31 2014 - socket: OK
