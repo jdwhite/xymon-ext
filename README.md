@@ -158,13 +158,13 @@ ext/client/tm_status
 --------------------
 Report status of Time Machine backups. Warns if Time Machine volume is not mounted or if latest backups is more than 3 hours old.
 
-   ====================================================
-   Name          : Untitled
-   Kind          : Local
-   Mount Point   : /Volumes/TimeMachine
-   ID            : 7736DE6E-FA75-44A8-B03F-47334230C3
-   Oldest backup : 2015-12-11 20:53:30 (36d 1h:17m:8s ago)
-   Latest backup : 2016-01-16 21:29:02 (41m:36s ago)
+    ====================================================
+    Name          : Untitled
+    Kind          : Local
+    Mount Point   : /Volumes/TimeMachine
+    ID            : 7736DE6E-FA75-44A8-B03F-47334230C3
+    Oldest backup : 2015-12-11 20:53:30 (36d 1h:17m:8s ago)
+    Latest backup : 2016-01-16 21:29:02 (41m:36s ago)
 
 ext/client/dwm_report
 ---------------------
@@ -196,12 +196,12 @@ Example output from the Gmail test:
           New messages should no longer be delayed. Messages stuck in the
           backlog will continue be delivered over the next few hours.
 
-   yellow Thu Feb  6 14:29:00 2014 [resolved]
+    yellow Thu Feb  6 14:29:00 2014 [resolved]
           Gmail service has already been restored for some users, and we 
           expect a resolution for all users in the near future. Please note 
           this time frame is an estimate and may change.
  
-   yellow Thu Feb  6 14:07:00 2014 [resolved]
+    yellow Thu Feb  6 14:07:00 2014 [resolved]
           Our team is continuing to investigate this issue. We will provide 
           an update by Thu Feb  6 16:00:00 2014 with more information about 
           this problem. Thank you for your patience.
@@ -210,7 +210,7 @@ Example output from the Gmail test:
           ---------------
           Some users may be experiencing delays in sending and receiving emails.
 
-   Source: http://www.google.com/appsstatus
+    Source: http://www.google.com/appsstatus
 
 Google_monitor has not been tested against a full service outage, so the event type is unknown to the author at this time. Unknown event types are flagged as yellow and diagnostic data will be presented on the test page. The author would be grateful for any reports of unknown type codes. 
 
