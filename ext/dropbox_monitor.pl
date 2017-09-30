@@ -104,7 +104,7 @@ while($main::HTML =~ /<div\s+.*?\sclass="component-inner-container\s+status-(\w+
 	my($testname) = $service;
 	#print "color='$testcolor'  testname='$testname'   status='$status'\n"; next;
 
-	# Xymon doesn't have an organge status.
+	# Xymon doesn't have an orange status.
 	$testcolor =~ s/orange/yellow/;
 
 	set_testcolor("$testcolor");
