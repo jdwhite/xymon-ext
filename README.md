@@ -315,23 +315,3 @@ Example output:
            Away Temp: 60/78
          Last Update: Sat Jan 16 21:52:46 2016
     Software Version: 5.1.6rc4
-
-Perl::Tidy
-----------
-The Perl code in this repository was formatted with the <tt>Perl::Tidy</tt> module (http://perltidy.sourceforge.net) with the following configuration from the book <i>Perl Best Practices</i> by Damian Conway.
-
-    -l=78   # Max line width is 78 cols
-    -i=4    # Indent level is 4 cols
-    -ci=4   # Continuation indent is 4 cols
-    -st     # Output to STDOUT
-    -se     # Errors to STDERR
-    -vt=2   # Maximal vertical tightness
-    -cti=0  # No extra indentation for closing brackets
-    -pt=1   # Medium parenthesis tightness
-    -bt=1   # Medium brace tightness
-    -sbt=1  # Medium square bracket tightness
-    -bbt=1  # Medium block brace tightness
-    -nsfs   # No space before semicolons
-    -nolq   # Don't outdent long quoted strings
-    # Break before all operators
-    -wbb="% + - * / x != == >= <= =~ !~ < > | & >= < = **= += *= &= <<= &&= -= /= |= >>= ||= .= %= ^= x="
