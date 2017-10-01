@@ -40,13 +40,7 @@ Perl module containing common Xymon related code used by modules in this reposit
 
 ext/client/test_framework
 -------------------------
-This is a sample test framework for creating other tests.  It's designed as a prelude to writing a Xymon module and contains a couple subroutines designed to take some of the drudgery out of writing Xymon tests.
-
- * **XymonEXT::set_testcolor** - tracks the canonical test color. When called the color is only set as the canonical color if it's severity is higher than the current value (obtainable using Xymon::get_testcolor).
-
- * **XymonEXT::send_status** - sends a status update. Parameters such as lifetime, group, hostname, testname, color, message, and summary can be passed to this subroutine and these criterion will be used to automatically format and send the status message.
-
-There are other getter/setter subroutines that can be used in leiu of passing certain parameters to **Xymon::send_status**.
+This is a sample test framework for creating other tests.
 
 ext/client/socket_monitor
 -------------------------
