@@ -46,7 +46,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 # Modify /etc/sudoers as follows:
 #
-#   1) Comment out "Defaults    requiretty" since user xymon has no tty when
+#   1) Add "Defaults:xymon    !requiretty" since user xymon has no tty when
 #      running this script.
 #
 #   2) Add the following line to the bottom of the config file to allow
